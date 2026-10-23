@@ -1,36 +1,78 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Urbino Help â€” Frontend
+
+Urbino Help is a service-booking platform frontend designed to provide users with an interface for exploring services and interacting with the platform's backend APIs.
+
+## Overview
+
+This repository contains the frontend application for Urbino Help. The backend is maintained separately in the [`urbino-help-backend`](https://github.com/mohammadumar01/urbino-help-backend) repository.
+
+## Features
+
+- Frontend interface for the Urbino Help platform
+- Integration with backend APIs
+- Service data fetching from the backend
+- API-driven user interface
+
+*Additional features will be documented as they are verified in the codebase.*
+
+## Tech Stack
+
+The exact frameworks, libraries, and tooling will be documented after reviewing the project's `package.json` and source files.
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js and npm
+- Git
+
+### Installation
+
+Clone the repository:
+
+```bash
+git clone https://github.com/mohammadumar01/urbino-help-frontend.git
+cd urbino-help-frontend
+```
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+### Environment Configuration
+
+Configure the frontend's backend API URL using the environment variable expected by the project.
+
+Create a local `.env` file if required. Refer to the project's configuration and never commit secrets, private keys, or credentials.
+
+### Run Locally
+
+Use the development command defined in `package.json`. For example, if the project uses Vite:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Backend
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The backend repository is available here:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+[Urbino Help Backend](https://github.com/mohammadumar01/urbino-help-backend)
 
-## Learn More
+## Project Status
 
-To learn more about Next.js, take a look at the following resources:
+The project is under active development. Features, API integrations, and documentation will be updated as implementation progresses.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Security
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Do not commit `.env` files or credentials.
+- Keep local dependencies and generated build files out of version control.
+- Use environment variables for configuration where supported.
 
-## Deploy on Vercel
+## Author
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Mohammad Umar
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+GitHub: [@mohammadumar01](https://github.com/mohammadumar01)
