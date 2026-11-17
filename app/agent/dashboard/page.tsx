@@ -422,34 +422,24 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
 }
 
 function OtpDialog({ job, onClose, onSubmit }: { job: AgentJob; onClose: () => void; onSubmit: (otp: string) => Promise<boolean> }) {
-  const [digits, setDigits] = useState(["", "", "", ""]);
+  // Ek hi input (4 boxes jaisa dikhta hai): fast typing ya paste mein digits aage-peeche nahi hote
+  const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
-  const refs = useRef<(HTMLInputElement | null)[]>([]);
-  const code = digits.join("");
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => refs.current[0]?.focus(), []);
-
-  function setAt(i: number, v: string) {
-    const clean = v.replace(/\D/g, "");
-    if (clean.length > 1) {
-      // paste: "1234"
-      const next = clean.slice(0, 4).split("");
-      setDigits([0, 1, 2, 3].map((k) => next[k] ?? ""));
-      refs.current[Math.min(3, next.length)]?.focus();
-      return;
-    }
-    setDigits((d) => d.map((x, k) => (k === i ? clean : x)));
-    if (clean && i < 3) refs.current[i + 1]?.focus();
-  }
+  useEffect(() => {
+    const t = setTimeout(() => inputRef.current?.focus(), 50);
+    return () => clearTimeout(t);
+  }, []);
 
   async function submit() {
-    if (code.length !== 4) return;
+    if (code.length !== 4 || busy) return;
     setBusy(true);
     const ok = await onSubmit(code);
     setBusy(false);
     if (!ok) {
-      setDigits(["", "", "", ""]);
-      refs.current[0]?.focus();
+      setCode("");
+      inputRef.current?.focus();
     }
   }
 
@@ -458,26 +448,30 @@ function OtpDialog({ job, onClose, onSubmit }: { job: AgentJob; onClose: () => v
       <p className="mt-1 text-sm text-gray-600">
         Ask {job.customer_name.split(" ")[0]} for the 4-digit code shown in their Urbino app. This confirms you have reached.
       </p>
-      <div className="mt-5 flex justify-center gap-3">
-        {digits.map((d, i) => (
-          <input
-            key={i}
-            ref={(el) => {
-              refs.current[i] = el;
-            }}
-            value={d}
-            onChange={(e) => setAt(i, e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Backspace" && !d && i > 0) refs.current[i - 1]?.focus();
-              if (e.key === "Enter") void submit();
-            }}
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            maxLength={4}
-            aria-label={`Digit ${i + 1}`}
-            className="h-14 w-12 rounded-xl border-2 border-gray-200 bg-white text-center text-2xl font-bold text-gray-950 outline-none focus:border-orange-500"
-          />
-        ))}
+      <div className="relative mx-auto mt-5 w-fit" onClick={() => inputRef.current?.focus()}>
+        <input
+          ref={inputRef}
+          value={code}
+          onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 4))}
+          onKeyDown={(e) => e.key === "Enter" && void submit()}
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          maxLength={4}
+          aria-label="4-digit start code"
+          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+        />
+        <div aria-hidden className="flex gap-3">
+          {[0, 1, 2, 3].map((i) => (
+            <span
+              key={i}
+              className={`flex h-14 w-12 items-center justify-center rounded-xl border-2 bg-white text-2xl font-bold text-gray-950 ${
+                i === Math.min(code.length, 3) ? "border-orange-500" : "border-gray-200"
+              }`}
+            >
+              {code[i] ?? ""}
+            </span>
+          ))}
+        </div>
       </div>
       <button
         type="button"

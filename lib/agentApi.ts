@@ -15,6 +15,7 @@ export interface AgentJob {
   customer_phone: string | null;
   provider_name: string | null;
   provider_phone: string | null;
+  provider_accepted_at: string | null;
   agent_assigned_at: string | null;
   agent_accepted_at: string | null;
   on_the_way_at: string | null;
