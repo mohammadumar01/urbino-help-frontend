@@ -51,7 +51,7 @@ const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
     title: "Team",
     items: [
       { label: "Agents", icon: "file", href: "/admin/agents" },
-      { label: "Provider verification", icon: "shield" },
+      { label: "Provider verification", icon: "shield", href: "/admin/verifications" },
     ],
   },
   {
