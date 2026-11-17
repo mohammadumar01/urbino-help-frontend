@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import RequireRole from "@/components/auth/RequireRole";
-import { useRouter } from "next/navigation";
+import ProviderShell from "@/components/provider/ProviderShell";
+import OnboardingBanner from "@/components/provider/OnboardingBanner";
 import {
   CalendarDays,
   Clock,
@@ -11,12 +11,10 @@ import {
   ClipboardList,
   Loader2,
   AlertCircle,
-  LogOut,
   CheckCircle,
 } from "lucide-react";
 
 import api from "../../../lib/api";
-import { clearSession } from "@/lib/auth";
 import { CashCollect } from "@/components/payments/PaymentActions";
 import type { PaymentStatus } from "@/lib/paymentsApi";
 
@@ -58,14 +56,13 @@ interface Agent {
 
 export default function ProviderDashboard() {
   return (
-    <RequireRole roles={["provider"]}>
+    <ProviderShell title="Bookings" subtitle="New requests near you and the jobs you have accepted.">
       <ProviderDashboardContent />
-    </RequireRole>
+    </ProviderShell>
   );
 }
 
 function ProviderDashboardContent() {
-  const router = useRouter();
 
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [totalBookings, setTotalBookings] = useState(0);
@@ -273,12 +270,6 @@ async function fetchAgents() {
   }
 
 
-  // Logout
-  function handleLogout() {
-    clearSession();
-
-    router.push("/login");
-  }
 
   // Format date
   function formatDate(date: string) {
@@ -304,75 +295,21 @@ async function fetchAgents() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      {/* Navbar */}
-      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-8">
-          <div>
-            <p className="text-lg font-extrabold tracking-[0.18em] text-blue-600">
-              URBINO
-            </p>
-
-            <p className="text-xs text-gray-500">
-              Provider Panel
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => {
-                                fetchPendingBookings();
-                                fetchMyBookings();
-                                fetchAgents();
-                              }}
-              disabled={loading || processingId !== null}
-              className="flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
-            >
-              <RefreshCw
-                size={16}
-                className={
-                  loading ? "animate-spin" : ""
-                }
-              />
-
-              <span className="hidden sm:inline">
-                Refresh
-              </span>
-            </button>
-
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800"
-            >
-              <LogOut size={16} />
-              Logout
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Dashboard */}
-      <section className="mx-auto max-w-7xl px-5 py-10 sm:px-8">
-        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-          <div>
-            <p className="text-sm font-bold tracking-widest text-blue-600">
-              PROVIDER WORKSPACE
-            </p>
-
-            <h1 className="mt-3 text-3xl font-bold tracking-tight text-gray-950 sm:text-4xl">
-              Provider Dashboard
-            </h1>
-
-            <p className="mt-2 text-gray-500">
-              Manage your service bookings and
-              customer requests.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <span className="h-2.5 w-2.5 rounded-full bg-green-500" />
-            Provider Portal
-          </div>
+    <section>
+        <div className="mb-6 flex items-center justify-between gap-3">
+          <OnboardingBanner />
+          <button
+            onClick={() => {
+              fetchPendingBookings();
+              fetchMyBookings();
+              fetchAgents();
+            }}
+            disabled={loading || processingId !== null}
+            className="flex shrink-0 items-center gap-2 self-start rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+          >
+            <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
+            <span className="hidden sm:inline">Refresh</span>
+          </button>
         </div>
 
         {/* Success Message */}
@@ -823,6 +760,5 @@ async function fetchAgents() {
 </div>
 
 </section>
-</main>
 );
 }

@@ -17,6 +17,7 @@ import {
 import api from "../../lib/api";
 import RequireRole from "../../components/auth/RequireRole";
 import PaymentActions from "../../components/payments/PaymentActions";
+import { getSlots } from "../../lib/providerApi";
 
 interface Service {
   id: number;
@@ -62,6 +63,31 @@ interface Booking {
   const [address, setAddress] = useState("");
   const [bookingDate, setBookingDate] = useState("");
   const [bookingTime, setBookingTime] = useState("");
+  const [slotState, setSlotState] = useState<{ loading: boolean; hasSchedule: boolean; slots: string[] }>({
+    loading: false,
+    hasSchedule: false,
+    slots: [],
+  });
+
+  // Provider + date chune jaane par uske free slots lao
+  useEffect(() => {
+    if (!selectedProviderId || !bookingDate) {
+      setSlotState({ loading: false, hasSchedule: false, slots: [] });
+      return;
+    }
+    let cancelled = false;
+    setSlotState((s) => ({ ...s, loading: true }));
+    getSlots(Number(selectedProviderId), bookingDate)
+      .then((r) => {
+        if (cancelled) return;
+        setSlotState({ loading: false, hasSchedule: r.has_schedule, slots: r.slots });
+        setBookingTime((t) => (r.has_schedule && !r.slots.includes(t) ? "" : t));
+      })
+      .catch(() => !cancelled && setSlotState({ loading: false, hasSchedule: false, slots: [] }));
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedProviderId, bookingDate]);
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -159,6 +185,11 @@ interface Booking {
 
     if (!selectedProviderId) {
       setError("Please select a service provider.");
+      return;
+    }
+
+    if (!bookingTime) {
+      setError("Please choose a time for your booking.");
       return;
     }
 
@@ -594,16 +625,50 @@ interface Booking {
                   Booking Time
                 </label>
 
-                <input
-                  id="booking-time"
-                  type="time"
-                  value={bookingTime}
-                  onChange={(e) =>
-                    setBookingTime(e.target.value)
-                  }
-                  required
-                  className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none focus:border-gray-500"
-                />
+                {slotState.loading ? (
+                  <p className="flex items-center gap-2 py-3 text-sm text-gray-500">
+                    <Loader2 size={16} className="animate-spin" /> Checking free slots…
+                  </p>
+                ) : slotState.hasSchedule ? (
+                  slotState.slots.length === 0 ? (
+                    <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                      No free slots on this day. Please choose another date.
+                    </p>
+                  ) : (
+                    <div id="booking-time" role="radiogroup" aria-label="Available time slots" className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                      {slotState.slots.map((t) => (
+                        <button
+                          key={t}
+                          type="button"
+                          role="radio"
+                          aria-checked={bookingTime === t}
+                          onClick={() => setBookingTime(t)}
+                          className={`rounded-xl border px-3 py-2.5 text-sm font-semibold transition ${
+                            bookingTime === t
+                              ? "border-gray-950 bg-gray-950 text-white"
+                              : "border-gray-200 bg-white text-gray-800 hover:border-gray-400"
+                          }`}
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  )
+                ) : (
+                  <input
+                    id="booking-time"
+                    type="time"
+                    value={bookingTime}
+                    onChange={(e) =>
+                      setBookingTime(e.target.value)
+                    }
+                    required
+                    className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none focus:border-gray-500"
+                  />
+                )}
+                {!bookingDate && selectedProviderId && (
+                  <p className="mt-1 text-xs text-gray-500">Pick a date to see free slots.</p>
+                )}
               </div>
 
               {/* Submit */}
