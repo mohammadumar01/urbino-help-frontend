@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import ProviderShell from "@/components/provider/ProviderShell";
 import OnboardingBanner from "@/components/provider/OnboardingBanner";
+import ReworkRequests from "@/components/provider/ReworkRequests";
 import {
   CalendarDays,
   Clock,
@@ -321,6 +322,8 @@ async function fetchAgents() {
             <span className="hidden sm:inline">Refresh</span>
           </button>
         </div>
+
+        <ReworkRequests onScheduled={() => { fetchMyBookings(); }} />
 
         {/* Success Message */}
         {successMessage && (

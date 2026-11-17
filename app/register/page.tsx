@@ -18,8 +18,9 @@ export default function RegisterPage() {
 
 function RegisterForm() {
   const searchParams = useSearchParams();
-  const [role, setRole] = useState<"customer" | "provider">(
-    searchParams.get("role") === "provider" ? "provider" : "customer"
+  const initialRole = searchParams.get("role");
+  const [role, setRole] = useState<"customer" | "provider" | "agent">(
+    initialRole === "provider" || initialRole === "agent" ? initialRole : "customer"
   );
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -110,6 +111,8 @@ function RegisterForm() {
           <p className="mt-3 text-sm leading-6 text-gray-500">
             {role === "provider"
               ? "Your provider account is ready. Log in to complete your profile and add your services."
+              : role === "agent"
+              ? "Your professional account is ready. Share your email with your provider so they can invite you to their team."
               : "Your Urbino account has been created successfully."}
           </p>
 
@@ -178,10 +181,11 @@ function RegisterForm() {
           >
 
             {/* Account type */}
-            <div className="mb-6 grid grid-cols-2 gap-2 rounded-xl bg-gray-100 p-1" role="radiogroup" aria-label="Account type">
+            <div className="mb-6 grid grid-cols-3 gap-1 rounded-xl bg-gray-100 p-1" role="radiogroup" aria-label="Account type">
               {([
                 ["customer", "I need services"],
-                ["provider", "I offer services"],
+                ["provider", "I run a business"],
+                ["agent", "I work as a pro"],
               ] as const).map(([value, label]) => (
                 <button
                   key={value}

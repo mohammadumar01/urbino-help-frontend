@@ -123,6 +123,9 @@ export default function PaymentActions({
     );
   }
   if (NOT_PAYABLE.includes(status) || amount == null) return null;
+  if (Number(amount) <= 0) {
+    return <p className="text-sm font-semibold text-emerald-700">Free under the Urbino service guarantee</p>;
+  }
 
   async function finishOnline(orderId: string, run: () => Promise<{ razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }>) {
     try {

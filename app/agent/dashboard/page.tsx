@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import AgentShell from "@/components/agent/AgentShell";
 import JobTimeline from "@/components/booking/JobTimeline";
+import InviteBanner from "@/components/agent/InviteBanner";
 import { CashCollect } from "@/components/payments/PaymentActions";
 import { apiError } from "@/lib/api";
 import { agentApi, type AgentJob, type AgentSummary, type JobGroup } from "@/lib/agentApi";
@@ -165,6 +166,8 @@ function AgentJobs() {
           <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} /> Refresh
         </button>
       </section>
+
+      <InviteBanner onJoined={() => void load(true)} />
 
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label="Summary">
         {[

@@ -17,6 +17,7 @@ Star,
 import api from "../../lib/api";
 import RequireRole from "../../components/auth/RequireRole";
 import JobTimeline from "../../components/booking/JobTimeline";
+import GuaranteeBox from "../../components/booking/GuaranteeBox";
 import PaymentActions, { PaymentBadge } from "../../components/payments/PaymentActions";
 import type { PaymentStatus } from "../../lib/paymentsApi";
 
@@ -36,6 +37,10 @@ agent_name?: string | null;
 agent_phone?: string | null;
 has_review?: boolean;
 start_otp?: string | null;
+rework_of?: number | null;
+can_claim?: boolean;
+claim_status?: "requested" | "accepted" | "rejected" | "escalated" | null;
+claim_note?: string | null;
 provider_accepted_at?: string | null;
 agent_accepted_at?: string | null;
 on_the_way_at?: string | null;
@@ -635,6 +640,18 @@ return (
       )}
     </button>
   </div>
+)}
+
+{/* 7-day service guarantee */}
+{(booking.status === "completed" || booking.rework_of) && (
+  <GuaranteeBox
+    bookingId={booking.id}
+    canClaim={booking.can_claim}
+    claimStatus={booking.claim_status}
+    claimNote={booking.claim_note}
+    isRework={!!booking.rework_of}
+    onChange={() => fetchBookings(true)}
+  />
 )}
 
 {/* Rating & Review */}

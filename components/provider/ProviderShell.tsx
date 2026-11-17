@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
-import { CalendarClock, ClipboardList, FileCheck2, LogOut, UserRound, Wrench } from "lucide-react";
+import { CalendarClock, ClipboardList, FileCheck2, LogOut, UserRound, Users, Wrench } from "lucide-react";
 import RequireRole from "@/components/auth/RequireRole";
 import UrbinoLogo from "@/components/brand/UrbinoLogo";
 import { clearSession, useAuth } from "@/lib/auth";
@@ -13,6 +13,7 @@ const TABS = [
   { href: "/provider/profile", label: "Profile", icon: UserRound },
   { href: "/provider/services", label: "Services", icon: Wrench },
   { href: "/provider/availability", label: "Working hours", icon: CalendarClock },
+  { href: "/provider/team", label: "Team", icon: Users },
   { href: "/provider/documents", label: "Documents", icon: FileCheck2 },
 ];
 
