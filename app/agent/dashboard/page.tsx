@@ -1,489 +1,535 @@
-
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import RequireRole from "@/components/auth/RequireRole";
-import api from "@/lib/api";
-import { clearSession } from "@/lib/auth";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  BellRing, CalendarDays, CheckCircle2, Clock3, Loader2, MapPin, Navigation, Phone, PlayCircle,
+  RefreshCw, Search, Star, Wrench, X,
+} from "lucide-react";
+import AgentShell from "@/components/agent/AgentShell";
+import JobTimeline from "@/components/booking/JobTimeline";
 import { CashCollect } from "@/components/payments/PaymentActions";
-import type { PaymentStatus } from "@/lib/paymentsApi";
+import { apiError } from "@/lib/api";
+import { agentApi, type AgentJob, type AgentSummary, type JobGroup } from "@/lib/agentApi";
+import { useAuth } from "@/lib/auth";
 
-type Job = {
-  id: number;
-  customer_id: number;
-  customer_name: string;
-  phone: string;
-  service_name: string;
-  address: string;
-  booking_date: string;
-  booking_time: string;
-  status: string;
-  created_at: string;
-  price?: string | number | null;
-  payment_status?: PaymentStatus | null;
-  payment_method?: string | null;
-};
+const TABS: { key: JobGroup; label: string; empty: string }[] = [
+  { key: "new", label: "New requests", empty: "No new requests. We'll show them here as soon as your provider assigns one." },
+  { key: "active", label: "In progress", empty: "Nothing in progress. Accept a new request to get started." },
+  { key: "done", label: "Completed", empty: "Completed jobs will appear here." },
+];
 
-const statusLabels: Record<string, string> = {
-  agent_assigned: "Agent Assigned",
-  agent_accepted: "Accepted",
-  on_the_way: "On The Way",
-  in_progress: "Work In Progress",
-  completed: "Completed",
-};
+const DECLINE_REASONS = ["Too far from my area", "Not available at this time", "I don't have the right tools", "Feeling unwell"];
 
-function normalizeStatus(status: string) {
-  return status.toLowerCase().replace(/[\s-]+/g, "_");
+function dayLabel(date: string) {
+  const today = new Date(Date.now() + 5.5 * 3600 * 1000).toISOString().slice(0, 10);
+  const tomorrow = new Date(Date.now() + 29.5 * 3600 * 1000).toISOString().slice(0, 10);
+  if (date === today) return "Today";
+  if (date === tomorrow) return "Tomorrow";
+  const d = new Date(`${date}T00:00:00`);
+  return d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
 }
 
-export default function AgentDashboard() {
+function time12(t: string) {
+  const [h, m] = t.slice(0, 5).split(":").map(Number);
+  return `${((h + 11) % 12) + 1}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
+}
+
+const mapsUrl = (address: string) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+
+/** Agle step ka ek hi bada button */
+function nextAction(status: AgentJob["status"]) {
+  switch (status) {
+    case "agent_assigned":
+      return { key: "accept", label: "Accept job", icon: CheckCircle2, hint: "Accept to confirm you'll do this job." };
+    case "agent_accepted":
+      return { key: "otw", label: "I'm on my way", icon: Navigation, hint: "Tap when you leave. The customer gets notified." };
+    case "on_the_way":
+      return { key: "start", label: "Enter start code", icon: PlayCircle, hint: "Ask the customer for the 4-digit code when you arrive." };
+    case "in_progress":
+      return { key: "complete", label: "Mark job complete", icon: CheckCircle2, hint: "Tap only after the work is fully done." };
+    default:
+      return null;
+  }
+}
+
+export default function AgentJobsPage() {
   return (
-    <RequireRole roles={["agent"]}>
-      <AgentDashboardContent />
-    </RequireRole>
+    <AgentShell>
+      <AgentJobs />
+    </AgentShell>
   );
 }
 
-function AgentDashboardContent() {
-  const [jobs, setJobs] = useState<Job[]>([]);
+function AgentJobs() {
+  const user = useAuth();
+  const [tab, setTab] = useState<JobGroup>("new");
+  const [jobs, setJobs] = useState<AgentJob[]>([]);
+  const [summary, setSummary] = useState<AgentSummary | null>(null);
   const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState<number | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
-
+  const [toast, setToast] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
+  const [busyId, setBusyId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("");
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalJobs, setTotalJobs] = useState(0);
+  const [otpFor, setOtpFor] = useState<AgentJob | null>(null);
+  const [declineFor, setDeclineFor] = useState<AgentJob | null>(null);
+  const autoTabbed = useRef(false);
 
-  const fetchJobs = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError("");
-
-      const response = await api.get("/api/agent/my-jobs", {
-        params: {
-          page,
-          limit: 10,
-          search,
-          status,
-          sortBy: "created_at",
-          order: "DESC",
-        },
-      });
-
-      const data = response.data;
-
-      setJobs(data.jobs || []);
-      setTotalJobs(Number(data.totalJobs || 0));
-      setTotalPages(Number(data.totalPages || 1));
-    } catch (err: any) {
-      setError(
-        err.response?.data?.message ||
-          "Jobs fetch nahi ho paayi. Login aur backend check karo."
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [page, search, status]);
+  const load = useCallback(
+    async (silent = false) => {
+      if (silent) setRefreshing(true);
+      try {
+        const [s, j] = await Promise.all([agentApi.summary(), agentApi.jobs(tab, search.trim())]);
+        setSummary(s);
+        setJobs(j.jobs);
+        setError("");
+        // Pehli baar: koi naya request nahi par active hai to seedha "In progress"
+        if (!autoTabbed.current) {
+          autoTabbed.current = true;
+          if (s.new === 0 && s.active > 0 && tab === "new") setTab("active");
+        }
+      } catch (e) {
+        setError(apiError(e, "Could not load your jobs."));
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [tab, search]
+  );
 
   useEffect(() => {
-    fetchJobs();
-  }, [fetchJobs]);
+    const t = setTimeout(() => void load(), search ? 300 : 0);
+    return () => clearTimeout(t);
+  }, [load, search]);
 
-  const handleAction = async (
-    jobId: number,
-    action: "accept" | "on-the-way" | "start" | "complete"
-  ) => {
-    const confirmMessage: Record<string, string> = {
-      accept: "Kya tum ye job accept karna chahte ho?",
-      "on-the-way": "Kya tum customer ke location par ja rahe ho?",
-      start: "Kya tum kaam start karna chahte ho?",
-      complete: "Kya tumne customer ka kaam complete kar diya hai?",
-    };
+  // Har 30 second naye jobs check karo (tab chhupa ho to nahi)
+  useEffect(() => {
+    const t = setInterval(() => {
+      if (!document.hidden) void load(true);
+    }, 30000);
+    return () => clearInterval(t);
+  }, [load]);
 
-    if (!window.confirm(confirmMessage[action])) return;
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 4000);
+    return () => clearTimeout(t);
+  }, [toast]);
 
+  async function run(job: AgentJob, fn: () => Promise<{ message: string }>, moveTo?: JobGroup) {
+    setBusyId(job.id);
     try {
-      setActionLoading(jobId);
-      setError("");
-      setMessage("");
-
-      const response = await api.put(
-        `/api/agent/${action}/${jobId}`
-      );
-
-      setMessage(
-        response.data.message || "Job status update ho gaya!"
-      );
-
-      await fetchJobs();
-    } catch (err: any) {
-      setError(
-        err.response?.data?.message ||
-          "Action failed. Please try again."
-      );
+      const r = await fn();
+      setToast({ tone: "ok", text: r.message });
+      if (moveTo && moveTo !== tab) setTab(moveTo);
+      else await load(true);
+      return true;
+    } catch (e) {
+      setToast({ tone: "err", text: apiError(e, "Something went wrong.") });
+      await load(true);
+      return false;
     } finally {
-      setActionLoading(null);
+      setBusyId(null);
     }
-  };
+  }
 
-  const getActionButton = (job: Job) => {
-    const currentStatus = normalizeStatus(job.status);
-    const isBusy = actionLoading === job.id;
-
-    if (currentStatus === "agent_assigned") {
-      return (
-        <button
-          onClick={() => handleAction(job.id, "accept")}
-          disabled={isBusy}
-          className="rounded-xl bg-green-600 px-5 py-3 font-semibold text-white hover:bg-green-700 disabled:opacity-50"
-        >
-          {isBusy ? "Processing..." : "Accept Job"}
-        </button>
-      );
+  function onPrimary(job: AgentJob) {
+    const a = nextAction(job.status);
+    if (!a) return;
+    if (a.key === "accept") void run(job, () => agentApi.accept(job.id), "active");
+    if (a.key === "otw") void run(job, () => agentApi.onTheWay(job.id));
+    if (a.key === "start") setOtpFor(job);
+    if (a.key === "complete") {
+      if (window.confirm("Is the work fully done? The customer will be asked to pay and rate you.")) {
+        void run(job, () => agentApi.complete(job.id));
+      }
     }
+  }
 
-    if (currentStatus === "agent_accepted") {
-      return (
-        <button
-          onClick={() => handleAction(job.id, "on-the-way")}
-          disabled={isBusy}
-          className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
-        >
-          {isBusy ? "Processing..." : "On The Way"}
-        </button>
-      );
-    }
-
-    if (currentStatus === "on_the_way") {
-      return (
-        <button
-          onClick={() => handleAction(job.id, "start")}
-          disabled={isBusy}
-          className="rounded-xl bg-indigo-600 px-5 py-3 font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
-        >
-          {isBusy ? "Processing..." : "Start Work"}
-        </button>
-      );
-    }
-
-    if (currentStatus === "in_progress") {
-      return (
-        <button
-          onClick={() => handleAction(job.id, "complete")}
-          disabled={isBusy}
-          className="rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-        >
-          {isBusy ? "Processing..." : "Complete Work"}
-        </button>
-      );
-    }
-
-    return (
-      <span className="rounded-full bg-green-100 px-4 py-2 text-sm font-semibold text-green-700">
-        Job Completed
-      </span>
-    );
-  };
-
-  const getStatusColor = (status: string) => {
-    const value = normalizeStatus(status);
-
-    if (value === "completed")
-      return "bg-green-100 text-green-700";
-
-    if (value === "in_progress")
-      return "bg-blue-100 text-blue-700";
-
-    if (value === "on_the_way")
-      return "bg-indigo-100 text-indigo-700";
-
-    return "bg-amber-100 text-amber-700";
-  };
+  const firstName = useMemo(() => (user?.name || "").split(" ")[0], [user]);
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900">
-      {/* Header */}
-      <header className="border-b bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5">
-          <div>
-            <h1 className="text-2xl font-extrabold tracking-widest text-blue-600">
-              URBINO
-            </h1>
-            <p className="text-sm text-slate-500">Agent Panel</p>
-          </div>
-
-          <div className="flex gap-3">
-            <button
-              onClick={fetchJobs}
-              className="rounded-xl border px-4 py-2 font-semibold hover:bg-slate-100"
-            >
-              Refresh
-            </button>
-
-            <a
-              href="/agent/profile"
-              className="rounded-xl border border-slate-300 bg-white px-4 py-2 font-semibold text-slate-700"
-            >
-              My Profile
-            </a>
-
-            <button
-              onClick={() => {
-                clearSession();
-                window.location.href = "/login";
-              }}
-              className="rounded-xl bg-slate-900 px-4 py-2 font-semibold text-white"
-            >
-              Logout
-            </button>
-          </div>
+    <div className="space-y-6">
+      <section className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <div>
+          <p className="text-sm font-medium text-gray-500">Namaste{firstName ? `, ${firstName}` : ""} 👋</p>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-gray-950 sm:text-3xl">Your jobs</h1>
         </div>
-      </header>
+        <button
+          type="button"
+          onClick={() => void load(true)}
+          disabled={refreshing}
+          className="inline-flex items-center gap-2 self-start rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60 sm:self-auto"
+        >
+          <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} /> Refresh
+        </button>
+      </section>
 
-      <div className="mx-auto max-w-7xl px-5 py-10">
-        <p className="mb-2 font-bold tracking-widest text-blue-600">
-          AGENT WORKSPACE
-        </p>
-
-        <h2 className="text-4xl font-extrabold">
-          My Assigned Jobs
-        </h2>
-
-        <p className="mt-3 text-slate-500">
-          Manage your assigned service requests and update job progress.
-        </p>
-
-        {/* Statistics */}
-        <div className="mt-8 grid gap-5 md:grid-cols-3">
-          <div className="rounded-2xl border bg-white p-6 shadow-sm">
-            <p className="text-sm text-slate-500">Total Jobs</p>
-            <h3 className="mt-3 text-4xl font-bold">{totalJobs}</h3>
-          </div>
-
-          <div className="rounded-2xl border bg-white p-6 shadow-sm">
-            <p className="text-sm text-slate-500">Jobs On This Page</p>
-            <h3 className="mt-3 text-4xl font-bold">{jobs.length}</h3>
-          </div>
-
-          <div className="rounded-2xl border bg-white p-6 shadow-sm">
-            <p className="text-sm text-slate-500">Account Role</p>
-            <h3 className="mt-3 text-3xl font-bold">Agent</h3>
-          </div>
-        </div>
-
-        {/* Messages */}
-        {message && (
-          <div className="mt-6 rounded-xl border border-green-200 bg-green-50 p-4 text-green-800">
-            {message}
-          </div>
-        )}
-
-        {error && (
-          <div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
-            {error}
-          </div>
-        )}
-
-        {/* Search and filter */}
-        <div className="mt-10 flex flex-col gap-4 rounded-2xl border bg-white p-5 md:flex-row">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            placeholder="Search customer, service or address..."
-            className="flex-1 rounded-xl border px-4 py-3 outline-none focus:border-blue-500"
-          />
-
-          <select
-            value={status}
-            onChange={(e) => {
-              setStatus(e.target.value);
-              setPage(1);
-            }}
-            className="rounded-xl border px-4 py-3 outline-none"
-          >
-            <option value="">All Statuses</option>
-            <option value="agent_assigned">Agent Assigned</option>
-            <option value="agent_accepted">Accepted</option>
-            <option value="on_the_way">On The Way</option>
-            <option value="in_progress">In Progress</option>
-            <option value="completed">Completed</option>
-          </select>
-        </div>
-
-        {/* Jobs */}
-        <div className="mt-8 flex items-center justify-between">
-          <div>
-            <h3 className="text-2xl font-bold">Assigned Jobs</h3>
-            <p className="mt-1 text-slate-500">
-              Review customer requests and take action.
+      <section className="grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label="Summary">
+        {[
+          { label: "New requests", value: summary?.new, icon: BellRing, tone: summary?.new ? "text-orange-600" : "text-gray-950" },
+          { label: "In progress", value: summary?.active, icon: Wrench, tone: "text-gray-950" },
+          { label: "Done today", value: summary?.completed_today, icon: CheckCircle2, tone: "text-emerald-600" },
+          { label: "Rating", value: summary?.rating ?? "—", icon: Star, tone: "text-gray-950" },
+        ].map(({ label, value, icon: Icon, tone }) => (
+          <div key={label} className="rounded-2xl border border-gray-200 bg-white p-4">
+            <p className="flex items-center gap-1.5 text-xs font-medium text-gray-500">
+              <Icon size={14} /> {label}
             </p>
+            <p className={`mt-1 text-2xl font-bold tabular-nums ${tone}`}>{value ?? "–"}</p>
           </div>
+        ))}
+      </section>
 
-          <span className="rounded-full bg-blue-100 px-4 py-2 text-sm font-semibold text-blue-700">
-            {totalJobs} Jobs
-          </span>
-        </div>
-
-        {loading ? (
-          <div className="mt-10 rounded-2xl border bg-white p-10 text-center">
-            Loading your jobs...
-          </div>
-        ) : jobs.length === 0 ? (
-          <div className="mt-8 rounded-2xl border bg-white p-12 text-center">
-            <h3 className="text-xl font-bold">No jobs found</h3>
-            <p className="mt-2 text-slate-500">
-              Abhi tumhare account par koi assigned job nahi hai.
-            </p>
-          </div>
-        ) : (
-          <div className="mt-6 grid gap-6 lg:grid-cols-2">
-            {jobs.map((job) => (
-              <div
-                key={job.id}
-                className="rounded-2xl border bg-white p-6 shadow-sm transition hover:shadow-md"
+      <section className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div role="tablist" aria-label="Job status" className="flex gap-1 overflow-x-auto rounded-xl bg-gray-100 p-1">
+          {TABS.map((t) => {
+            const n = t.key === "new" ? summary?.new : t.key === "active" ? summary?.active : undefined;
+            return (
+              <button
+                key={t.key}
+                role="tab"
+                aria-selected={tab === t.key}
+                onClick={() => setTab(t.key)}
+                className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-semibold transition ${
+                  tab === t.key ? "bg-white text-gray-950 shadow-sm" : "text-gray-500 hover:text-gray-900"
+                }`}
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-400">
-                      BOOKING #{job.id}
-                    </p>
+                {t.label}
+                {!!n && (
+                  <span className={`rounded-full px-1.5 text-xs ${t.key === "new" ? "bg-orange-500 text-white" : "bg-gray-200 text-gray-700"}`}>{n}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        <label className="relative block sm:w-72">
+          <span className="sr-only">Search jobs</span>
+          <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Customer, service or area"
+            className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm text-gray-900 outline-none focus:border-gray-400"
+          />
+        </label>
+      </section>
 
-                    <h3 className="mt-2 text-2xl font-bold">
-                      {job.service_name}
-                    </h3>
-                  </div>
+      {error && <p role="alert" className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p>}
 
-                  <span
-                    className={`rounded-full px-3 py-2 text-xs font-bold ${getStatusColor(
-                      job.status
-                    )}`}
-                  >
-                    {statusLabels[normalizeStatus(job.status)] ||
-                      job.status}
-                  </span>
-                </div>
+      {loading ? (
+        <div className="space-y-4">
+          {[0, 1].map((i) => (
+            <div key={i} className="h-56 animate-pulse rounded-2xl bg-white" />
+          ))}
+        </div>
+      ) : jobs.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-gray-300 bg-white px-6 py-14 text-center">
+          <ClipboardEmpty />
+          <p className="mt-3 text-sm text-gray-500">{TABS.find((t) => t.key === tab)?.empty}</p>
+        </div>
+      ) : (
+        <ul className="space-y-4">
+          {jobs.map((job) => (
+            <JobCard
+              key={job.id}
+              job={job}
+              busy={busyId === job.id}
+              onPrimary={() => onPrimary(job)}
+              onDecline={() => setDeclineFor(job)}
+              onChanged={() => void load(true)}
+            />
+          ))}
+        </ul>
+      )}
 
-                <hr className="my-5" />
+      {otpFor && (
+        <OtpDialog
+          job={otpFor}
+          onClose={() => setOtpFor(null)}
+          onSubmit={async (otp) => {
+            const ok = await run(otpFor, () => agentApi.start(otpFor.id, otp));
+            if (ok) setOtpFor(null);
+            return ok;
+          }}
+        />
+      )}
 
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm text-slate-400">
-                      Customer Name
-                    </p>
-                    <p className="mt-1 font-semibold">
-                      {job.customer_name || `Customer #${job.customer_id}`}
-                    </p>
-                  </div>
+      {declineFor && (
+        <DeclineDialog
+          job={declineFor}
+          onClose={() => setDeclineFor(null)}
+          onSubmit={async (reason) => {
+            const ok = await run(declineFor, () => agentApi.decline(declineFor.id, reason));
+            if (ok) setDeclineFor(null);
+          }}
+        />
+      )}
 
-                  <div>
-                    <p className="text-sm text-slate-400">
-                      Customer Phone
-                    </p>
-                    <p className="mt-1 font-semibold">
-                      {job.phone || "Not available"}
-                    </p>
+      {toast && (
+        <div
+          role="status"
+          className={`fixed inset-x-4 bottom-20 z-50 mx-auto max-w-md rounded-xl px-4 py-3 text-sm font-medium text-white shadow-lg sm:bottom-6 ${
+            toast.tone === "ok" ? "bg-gray-950" : "bg-rose-600"
+          }`}
+        >
+          {toast.text}
+        </div>
+      )}
+    </div>
+  );
+}
 
-                    {job.phone && (
-                      <a
-                        href={`tel:${job.phone}`}
-                        className="mt-2 inline-block font-semibold text-blue-600 hover:underline"
-                      >
-                        Call Customer
-                      </a>
-                    )}
-                  </div>
+function ClipboardEmpty() {
+  return (
+    <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-orange-50 text-orange-500">
+      <CalendarDays size={22} />
+    </span>
+  );
+}
 
-                  <CashCollect
-                    bookingId={job.id}
-                    bookingStatus={job.status}
-                    amount={job.price ?? null}
-                    paymentStatus={job.payment_status}
-                    paymentMethod={job.payment_method}
-                    onChange={fetchJobs}
-                  />
+function JobCard({
+  job,
+  busy,
+  onPrimary,
+  onDecline,
+  onChanged,
+}: {
+  job: AgentJob;
+  busy: boolean;
+  onPrimary: () => void;
+  onDecline: () => void;
+  onChanged: () => void;
+}) {
+  const action = nextAction(job.status);
+  const isNew = job.status === "agent_assigned";
+  const canDecline = job.status === "agent_assigned" || job.status === "agent_accepted";
+  const showCash = job.status === "in_progress" || job.status === "completed";
 
-                  <div>
-                    <p className="text-sm text-slate-400">
-                      Service Address
-                    </p>
-                    <p className="mt-1 font-semibold">
-                      {job.address}
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-slate-400">
-                        Booking Date
-                      </p>
-                      <p className="mt-1 font-semibold">
-                        {new Date(job.booking_date).toLocaleDateString(
-                          "en-IN",
-                          {
-                            day: "2-digit",
-                            month: "short",
-                            year: "numeric",
-                            timeZone: "UTC",
-                          }
-                        )}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-sm text-slate-400">
-                        Booking Time
-                      </p>
-                      <p className="mt-1 font-semibold">
-                        {String(job.booking_time).slice(0, 5)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <hr className="my-5" />
-
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                  <p className="text-sm text-slate-400">
-                    Customer ID: {job.customer_id}
-                  </p>
-
-                  {getActionButton(job)}
-                </div>
-              </div>
-            ))}
+  return (
+    <li className={`overflow-hidden rounded-2xl border bg-white shadow-sm ${isNew ? "border-orange-300 ring-2 ring-orange-100" : "border-gray-200"}`}>
+      <div className="p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold text-gray-400">BOOKING #{job.id}</p>
+            <h2 className="mt-0.5 text-lg font-bold text-gray-950">{job.service_name}</h2>
           </div>
+          <div className="text-right">
+            <p className="flex items-center justify-end gap-1.5 text-sm font-bold text-gray-950">
+              <Clock3 size={15} /> {time12(job.booking_time)}
+            </p>
+            <p className={`text-sm font-semibold ${dayLabel(job.booking_date) === "Today" ? "text-orange-600" : "text-gray-500"}`}>
+              {dayLabel(job.booking_date)}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <a
+            href={mapsUrl(job.address)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-start gap-2.5 rounded-xl bg-gray-50 p-3 text-sm text-gray-800 hover:bg-gray-100"
+          >
+            <MapPin size={18} className="mt-0.5 shrink-0 text-orange-600" />
+            <span className="min-w-0">
+              <span className="block break-words font-medium">{job.address}</span>
+              <span className="text-xs font-semibold text-blue-600">Open in Google Maps</span>
+            </span>
+          </a>
+          <div className="flex items-center justify-between gap-3 rounded-xl bg-gray-50 p-3 text-sm">
+            <div className="min-w-0">
+              <p className="truncate font-medium text-gray-900">{job.customer_name}</p>
+              <p className="text-xs text-gray-500">Customer{job.provider_name ? ` · via ${job.provider_name}` : ""}</p>
+            </div>
+            {job.customer_phone && job.status !== "completed" && (
+              <a
+                href={`tel:${job.customer_phone}`}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-xs font-semibold text-gray-800 ring-1 ring-gray-200 hover:bg-gray-100"
+              >
+                <Phone size={14} /> Call
+              </a>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-5">
+          <JobTimeline booking={{ ...job, status: job.status }} />
+        </div>
+
+        {showCash && (
+          <CashCollect
+            bookingId={job.id}
+            bookingStatus={job.status}
+            amount={job.price}
+            paymentStatus={job.payment_status}
+            paymentMethod={job.payment_method}
+            onChange={onChanged}
+          />
         )}
+      </div>
 
-        {/* Pagination */}
-        <div className="mt-8 flex items-center justify-center gap-4">
-          <button
-            disabled={page <= 1 || loading}
-            onClick={() => setPage((p) => p - 1)}
-            className="rounded-xl border bg-white px-5 py-3 font-semibold disabled:opacity-40"
-          >
-            Previous
-          </button>
+      {action && (
+        <div className="border-t border-gray-100 bg-gray-50/60 p-4">
+          <p className="mb-2 text-xs text-gray-500">{action.hint}</p>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <button
+              type="button"
+              onClick={onPrimary}
+              disabled={busy}
+              className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-gray-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:opacity-60"
+            >
+              {busy ? <Loader2 size={18} className="animate-spin" /> : <action.icon size={18} />} {action.label}
+            </button>
+            {canDecline && (
+              <button
+                type="button"
+                onClick={onDecline}
+                disabled={busy}
+                className="rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-60"
+              >
+                Can&apos;t do it
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </li>
+  );
+}
 
-          <span className="font-semibold">
-            Page {page} of {Math.max(totalPages, 1)}
-          </span>
-
-          <button
-            disabled={page >= totalPages || loading}
-            onClick={() => setPage((p) => p + 1)}
-            className="rounded-xl border bg-white px-5 py-3 font-semibold disabled:opacity-40"
-          >
-            Next
+function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-gray-950/50 p-0 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-label={title}>
+      <div className="w-full max-w-md rounded-t-3xl bg-white p-6 shadow-2xl sm:rounded-3xl">
+        <div className="flex items-start justify-between gap-3">
+          <h2 className="text-lg font-bold text-gray-950">{title}</h2>
+          <button type="button" onClick={onClose} aria-label="Close" className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100">
+            <X size={18} />
           </button>
         </div>
+        {children}
       </div>
-    </main>
+    </div>
+  );
+}
+
+function OtpDialog({ job, onClose, onSubmit }: { job: AgentJob; onClose: () => void; onSubmit: (otp: string) => Promise<boolean> }) {
+  const [digits, setDigits] = useState(["", "", "", ""]);
+  const [busy, setBusy] = useState(false);
+  const refs = useRef<(HTMLInputElement | null)[]>([]);
+  const code = digits.join("");
+
+  useEffect(() => refs.current[0]?.focus(), []);
+
+  function setAt(i: number, v: string) {
+    const clean = v.replace(/\D/g, "");
+    if (clean.length > 1) {
+      // paste: "1234"
+      const next = clean.slice(0, 4).split("");
+      setDigits([0, 1, 2, 3].map((k) => next[k] ?? ""));
+      refs.current[Math.min(3, next.length)]?.focus();
+      return;
+    }
+    setDigits((d) => d.map((x, k) => (k === i ? clean : x)));
+    if (clean && i < 3) refs.current[i + 1]?.focus();
+  }
+
+  async function submit() {
+    if (code.length !== 4) return;
+    setBusy(true);
+    const ok = await onSubmit(code);
+    setBusy(false);
+    if (!ok) {
+      setDigits(["", "", "", ""]);
+      refs.current[0]?.focus();
+    }
+  }
+
+  return (
+    <Modal title="Enter start code" onClose={onClose}>
+      <p className="mt-1 text-sm text-gray-600">
+        Ask {job.customer_name.split(" ")[0]} for the 4-digit code shown in their Urbino app. This confirms you have reached.
+      </p>
+      <div className="mt-5 flex justify-center gap-3">
+        {digits.map((d, i) => (
+          <input
+            key={i}
+            ref={(el) => {
+              refs.current[i] = el;
+            }}
+            value={d}
+            onChange={(e) => setAt(i, e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Backspace" && !d && i > 0) refs.current[i - 1]?.focus();
+              if (e.key === "Enter") void submit();
+            }}
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            maxLength={4}
+            aria-label={`Digit ${i + 1}`}
+            className="h-14 w-12 rounded-xl border-2 border-gray-200 bg-white text-center text-2xl font-bold text-gray-950 outline-none focus:border-orange-500"
+          />
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={() => void submit()}
+        disabled={busy || code.length !== 4}
+        className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gray-950 px-5 py-3 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50"
+      >
+        {busy && <Loader2 size={16} className="animate-spin" />} Start work
+      </button>
+    </Modal>
+  );
+}
+
+function DeclineDialog({ job, onClose, onSubmit }: { job: AgentJob; onClose: () => void; onSubmit: (reason: string) => Promise<void> }) {
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+  return (
+    <Modal title={`Can't do booking #${job.id}?`} onClose={onClose}>
+      <p className="mt-1 text-sm text-gray-600">Your provider will assign someone else. Tell them why.</p>
+      <div className="mt-4 flex flex-wrap gap-2">
+        {DECLINE_REASONS.map((r) => (
+          <button
+            key={r}
+            type="button"
+            onClick={() => setReason(r)}
+            className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${reason === r ? "border-gray-950 bg-gray-950 text-white" : "border-gray-200 text-gray-700 hover:border-gray-400"}`}
+          >
+            {r}
+          </button>
+        ))}
+      </div>
+      <textarea
+        value={reason}
+        onChange={(e) => setReason(e.target.value)}
+        rows={3}
+        maxLength={300}
+        placeholder="Or write your reason"
+        aria-label="Reason"
+        className="mt-3 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none focus:border-gray-400"
+      />
+      <button
+        type="button"
+        disabled={busy || reason.trim().length < 3}
+        onClick={async () => {
+          setBusy(true);
+          await onSubmit(reason.trim());
+          setBusy(false);
+        }}
+        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-rose-600 px-5 py-3 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-50"
+      >
+        {busy && <Loader2 size={16} className="animate-spin" />} Decline job
+      </button>
+    </Modal>
   );
 }

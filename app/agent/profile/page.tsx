@@ -1,8 +1,7 @@
 
 "use client";
 
-import Link from "next/link";
-import RequireRole from "@/components/auth/RequireRole";
+import AgentShell from "@/components/agent/AgentShell";
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
 
@@ -72,9 +71,9 @@ const SKILL_OPTIONS = [
 
 export default function AgentProfilePage() {
   return (
-    <RequireRole roles={["agent"]}>
+    <AgentShell>
       <AgentProfileContent />
-    </RequireRole>
+    </AgentShell>
   );
 }
 
@@ -311,19 +310,12 @@ function AgentProfileContent() {
   );
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-8 text-slate-900 sm:px-8">
-      <div className="mx-auto max-w-4xl">
+    <div className="text-slate-900">
+      <div>
         <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <Link
-              href="/agent/dashboard"
-              className="text-sm font-semibold text-blue-600 hover:underline"
-            >
-              ← Back to Dashboard
-            </Link>
-
-            <h1 className="mt-3 text-3xl font-bold">
-              Agent Profile
+            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+              Your profile
             </h1>
 
             <p className="mt-2 text-slate-600">
@@ -626,6 +618,6 @@ function AgentProfileContent() {
           </form>
         )}
       </div>
-    </main>
+    </div>
   );
 }

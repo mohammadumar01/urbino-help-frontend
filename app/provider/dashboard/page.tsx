@@ -16,6 +16,7 @@ import {
 
 import api from "../../../lib/api";
 import { CashCollect } from "@/components/payments/PaymentActions";
+import JobTimeline from "@/components/booking/JobTimeline";
 import type { PaymentStatus } from "@/lib/paymentsApi";
 
 interface Booking {
@@ -33,6 +34,15 @@ interface Booking {
   price?: string | number | null;
   payment_status?: PaymentStatus | null;
   payment_method?: string | null;
+  agent_name?: string | null;
+  agent_phone?: string | null;
+  agent_declined_reason?: string | null;
+  created_at?: string | null;
+  provider_accepted_at?: string | null;
+  agent_accepted_at?: string | null;
+  on_the_way_at?: string | null;
+  started_at?: string | null;
+  completed_at?: string | null;
 }
 
 interface PendingBookingsResponse {
@@ -677,6 +687,16 @@ async function fetchAgents() {
             )}
           </div>
 
+          <div className="mt-5">
+            <JobTimeline booking={booking} compact />
+          </div>
+
+          {!booking.agent_id && booking.agent_declined_reason && (
+            <p className="mt-4 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-800">
+              Previous agent declined: {booking.agent_declined_reason}. Please assign someone else.
+            </p>
+          )}
+
           <CashCollect
             bookingId={booking.id}
             bookingStatus={booking.status}
@@ -747,9 +767,14 @@ async function fetchAgents() {
             <div className="mt-5 rounded-xl bg-green-50 p-4 text-sm text-green-800">
               <p className="font-semibold">Agent Assigned</p>
               <p className="mt-1">
-                {agents.find(
-                  (agent) => agent.agent_id === booking.agent_id
-                )?.agent_name || `Agent #${booking.agent_id}`}
+                {booking.agent_name ||
+                  agents.find((agent) => agent.agent_id === booking.agent_id)?.agent_name ||
+                  `Agent #${booking.agent_id}`}
+                {booking.agent_phone && (
+                  <a href={`tel:${booking.agent_phone}`} className="ml-2 font-semibold underline">
+                    {booking.agent_phone}
+                  </a>
+                )}
               </p>
             </div>
           )}

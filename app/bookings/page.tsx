@@ -16,6 +16,7 @@ Star,
 
 import api from "../../lib/api";
 import RequireRole from "../../components/auth/RequireRole";
+import JobTimeline from "../../components/booking/JobTimeline";
 import PaymentActions, { PaymentBadge } from "../../components/payments/PaymentActions";
 import type { PaymentStatus } from "../../lib/paymentsApi";
 
@@ -34,6 +35,12 @@ provider_name?: string | null;
 agent_name?: string | null;
 agent_phone?: string | null;
 has_review?: boolean;
+start_otp?: string | null;
+provider_accepted_at?: string | null;
+agent_accepted_at?: string | null;
+on_the_way_at?: string | null;
+started_at?: string | null;
+completed_at?: string | null;
 payment_status?: PaymentStatus | null;
 payment_method?: string | null;
 }
@@ -451,54 +458,23 @@ return (
 
             </div>
 
-           {/* Booking Progress Tracker */}
-              <div className="mt-6 rounded-2xl border border-gray-100 bg-gray-50 p-5">
-                {booking.status?.toLowerCase() === "cancelled" ? (
-                  <p className="text-sm font-semibold text-red-600">
-                    This booking was cancelled.
-                  </p>
-                ) : (
-                  <>
-                    <h3 className="mb-5 text-sm font-bold text-gray-900">
-                      Booking Progress
-                    </h3>
-
-                    <div className="grid grid-cols-3 gap-2">
-                      {["Pending", "Accepted", "Completed"].map(
-                        (step, index) => {
-                          const progress = getBookingProgress(
-                            booking.status
-                          );
-
-                          const isDone = index <= progress;
-
-                          return (
-                            <div key={step} className="text-center">
-                              <div
-                                className={`mx-auto flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
-                                  isDone
-                                    ? "bg-blue-600 text-white"
-                                    : "border border-gray-300 bg-white text-gray-400"
-                                }`}
-                              >
-                                {isDone ? "✓" : index + 1}
-                              </div>
-
-                              <p
-                                className={`mt-2 text-xs font-semibold ${
-                                  isDone
-                                    ? "text-blue-700"
-                                    : "text-gray-400"
-                                }`}
-                              >
-                                {step}
-                              </p>
-                            </div>
-                          );
-                        }
-                      )}
+           {/* Live progress */}
+              <div className="mt-6 rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                <JobTimeline booking={booking} />
+                {booking.start_otp && (
+                  <div className="mt-4 flex flex-col items-start gap-3 rounded-xl border border-orange-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-950">
+                        {booking.status === "on_the_way" ? "Your professional is on the way" : "Your professional is confirmed"}
+                      </p>
+                      <p className="mt-0.5 text-xs text-gray-500">
+                        Share this start code only after they reach your home. Never share it on call.
+                      </p>
                     </div>
-                  </>
+                    <p className="font-mono text-3xl font-bold tracking-[0.3em] text-orange-600" aria-label={`Start code ${booking.start_otp.split("").join(" ")}`}>
+                      {booking.start_otp}
+                    </p>
+                  </div>
                 )}
               </div>
             {/* Details */}
