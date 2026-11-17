@@ -1,12 +1,26 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Loader2 } from "lucide-react";
 
-import api from "../../lib/api";
+import api, { apiError } from "../../lib/api";
+import UrbinoLogo from "../../components/brand/UrbinoLogo";
 
 export default function RegisterPage() {
+  return (
+    <Suspense fallback={null}>
+      <RegisterForm />
+    </Suspense>
+  );
+}
+
+function RegisterForm() {
+  const searchParams = useSearchParams();
+  const [role, setRole] = useState<"customer" | "provider">(
+    searchParams.get("role") === "provider" ? "provider" : "customer"
+  );
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -58,33 +72,21 @@ export default function RegisterPage() {
       }
 
       // Register API
-      const response = await api.post(
+      await api.post(
         "/api/auth/register",
         {
           name,
           email,
           phone,
           password,
+          role,
         }
-      );
-
-      console.log(
-        "Register response:",
-        response.data
       );
 
       setSuccess(true);
 
-    } catch (error: any) {
-      console.error(
-        "Registration failed:",
-        error
-      );
-
-      setError(
-        error?.response?.data?.message ||
-          "Unable to create account."
-      );
+    } catch (error) {
+      setError(apiError(error, "Unable to create account."));
 
     } finally {
       setLoading(false);
@@ -106,8 +108,9 @@ export default function RegisterPage() {
           </h1>
 
           <p className="mt-3 text-sm leading-6 text-gray-500">
-            Your Urbino account has been created
-            successfully.
+            {role === "provider"
+              ? "Your provider account is ready. Log in to complete your profile and add your services."
+              : "Your Urbino account has been created successfully."}
           </p>
 
           <Link
@@ -150,9 +153,12 @@ export default function RegisterPage() {
           {/* Heading */}
           <div className="text-center">
 
-            <p className="text-sm font-bold tracking-[0.2em] text-blue-600">
-              URBINO
-            </p>
+            <Link href="/" className="mx-auto flex w-fit flex-col items-center gap-2" aria-label="Urbino Help home">
+              <UrbinoLogo className="h-14 w-14 drop-shadow-[0_6px_16px_rgba(238,116,48,0.30)]" />
+              <span className="text-lg font-bold tracking-tight text-gray-950">
+                Urbino<span className="text-orange-500"> Help</span>
+              </span>
+            </Link>
 
             <h1 className="mt-4 text-3xl font-bold tracking-tight text-gray-950">
               Create your account
@@ -170,6 +176,27 @@ export default function RegisterPage() {
             onSubmit={handleRegister}
             className="mt-8"
           >
+
+            {/* Account type */}
+            <div className="mb-6 grid grid-cols-2 gap-2 rounded-xl bg-gray-100 p-1" role="radiogroup" aria-label="Account type">
+              {([
+                ["customer", "I need services"],
+                ["provider", "I offer services"],
+              ] as const).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  role="radio"
+                  aria-checked={role === value}
+                  onClick={() => setRole(value)}
+                  className={`rounded-lg px-3 py-2.5 text-sm font-semibold transition ${
+                    role === value ? "bg-white text-gray-950 shadow-sm" : "text-gray-500 hover:text-gray-800"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
 
             {/* Name */}
             <div>

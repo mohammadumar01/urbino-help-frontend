@@ -1,5 +1,6 @@
 "use client";
 
+import UrbinoLogo from "@/components/brand/UrbinoLogo";
 import {
   useCallback,
   useEffect,
@@ -58,10 +59,12 @@ const REFRESH_INTERVAL_MS = 60_000;
 const REQUEST_TIMEOUT_MS = 15_000;
 const RANGES = [7, 30, 90] as const;
 const PAGE_SIZE = 6;
-const SIDEBAR_KEY = "urbino:sidebarCollapsed";
+
+const BRAND = "#E8692A";
+const FOCUS = "focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E8692A]";
 
 const METRIC_META: Record<Metric, { label: string; color: string; money?: boolean }> = {
-  bookings: { label: "Bookings", color: "#2563eb" },
+  bookings: { label: "Bookings", color: BRAND },
   completed: { label: "Completed", color: "#10b981" },
   cancelled: { label: "Cancelled", color: "#f43f5e" },
   revenue: { label: "Revenue", color: "#7c3aed", money: true },
@@ -119,33 +122,6 @@ function Icon({ name, size = 18 }: { name: string; size?: number }) {
     </svg>
   );
 }
-
-const NAV_GROUPS = [
-  {
-    title: "Operations",
-    items: [
-      { label: "Overview", icon: "grid", active: true },
-      { label: "Bookings", icon: "calendar", active: false, badge: "pending" },
-      { label: "Users", icon: "users", active: false },
-    ],
-  },
-  {
-    title: "Verification",
-    items: [
-      { label: "Providers", icon: "shield", active: false },
-      { label: "Agents", icon: "file", active: false },
-    ],
-  },
-  { title: "Catalog", items: [{ label: "Services", icon: "layers", active: false }] },
-  {
-    title: "Finance",
-    items: [
-      { label: "Payments", icon: "rupee", active: false },
-      { label: "Reports", icon: "pulse", active: false },
-    ],
-  },
-  { title: "System", items: [{ label: "Settings", icon: "settings", active: false }] },
-] as const;
 
 const STATUS_STYLES: Record<BookingStatus, { label: string; pill: string; color: string }> = {
   pending: { label: "Pending", pill: "bg-amber-50 text-amber-700 ring-amber-600/20", color: "#f59e0b" },
@@ -230,7 +206,7 @@ function exportCsv(rows: RecentBooking[]) {
   const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
   const body = rows.map((r) => [r.id, r.customer, r.service, r.provider ?? "", r.status, r.amount ?? "", r.createdAt]);
   const csv = [head, ...body].map((r) => r.map(esc).join(",")).join("\n");
-  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
+  const url = URL.createObjectURL(new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" }));
   const a = document.createElement("a");
   a.href = url;
   a.download = `bookings-${new Date().toISOString().slice(0, 10)}.csv`;
@@ -393,7 +369,7 @@ function Segmented<T extends string | number>({
           role="tab"
           aria-selected={value === o}
           onClick={() => onChange(o)}
-          className={`rounded-md px-3 py-1.5 text-xs font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 ${
+          className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${FOCUS} ${
             value === o ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-800"
           }`}
         >
@@ -449,7 +425,7 @@ function TrendChart({
 
   const ticks = [0, 0.25, 0.5, 0.75, 1].map((t) => Math.round(max * t));
   const step = Math.max(1, Math.ceil(n / 7));
-  const axis = (v: number) => (meta.money ? `â‚¹${formatCompact(v)}` : formatCompact(v));
+  const axis = (v: number) => (meta.money ? `₹${formatCompact(v)}` : formatCompact(v));
 
   function indexFromPointer(e: ReactPointerEvent<SVGSVGElement>) {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -479,7 +455,7 @@ function TrendChart({
       <style>{CHART_CSS}</style>
       <svg
         viewBox={`0 0 ${W} ${H}`}
-        className="h-auto w-full touch-pan-y select-none rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+        className="h-auto w-full touch-pan-y select-none rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-[#E8692A]"
         role="img"
         tabIndex={0}
         aria-label={`${meta.label} over time. Use the left and right arrow keys to inspect each day.`}
@@ -523,7 +499,7 @@ function TrendChart({
                 x={W - padR - 4} y={y(avg) - 6} textAnchor="end" fontSize="11" fontWeight="600" fill={meta.color}
                 stroke="#fff" strokeWidth="3" style={{ paintOrder: "stroke" }}
               >
-                Avg {meta.money ? `â‚¹${formatCompact(avg)}` : formatCompact(avg)}
+                Avg {meta.money ? `₹${formatCompact(avg)}` : formatCompact(avg)}
               </text>
             </g>
           )}
@@ -537,7 +513,7 @@ function TrendChart({
                 x={x(peakIdx)} y={y(peakVal) - 11} textAnchor={peakAnchor} fontSize="11" fontWeight="600" fill="#334155"
                 stroke="#fff" strokeWidth="3" style={{ paintOrder: "stroke" }}
               >
-                Peak {meta.money ? `â‚¹${formatCompact(peakVal)}` : formatNumber(peakVal)}
+                Peak {meta.money ? `₹${formatCompact(peakVal)}` : formatNumber(peakVal)}
               </text>
             </g>
           )}
@@ -573,7 +549,7 @@ function TrendChart({
           )}
           {hDelta !== null && (
             <p className={`mt-2 border-t border-slate-100 pt-2 font-semibold ${hDelta >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
-              {hDelta >= 0 ? "â–²" : "â–¼"} {Math.abs(hDelta).toFixed(1)}% vs previous period
+              {hDelta >= 0 ? "▲" : "▼"} {Math.abs(hDelta).toFixed(1)}% vs previous period
             </p>
           )}
         </div>
@@ -636,8 +612,6 @@ export default function AdminDashboardPage() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [now, setNow] = useState<Date | null>(null);
 
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [bellOpen, setBellOpen] = useState(false);
   const [live, setLive] = useState(true);
@@ -735,14 +709,12 @@ export default function AdminDashboardPage() {
   }, []);
 
   useEffect(() => {
-    try { setCollapsed(localStorage.getItem(SIDEBAR_KEY) === "1"); } catch { /* ignore */ }
-    if (/Mac|iPhone|iPad/.test(navigator.platform)) setModKey("âŒ˜");
+    if (/Mac|iPhone|iPad/.test(navigator.platform)) setModKey("⌘");
   }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        setMenuOpen(false);
         setProfileOpen(false);
         setBellOpen(false);
         setSelected(null);
@@ -760,12 +732,6 @@ export default function AdminDashboardPage() {
     if (selected) closeRef.current?.focus();
   }, [selected]);
 
-  function toggleCollapsed() {
-    setCollapsed((v) => {
-      try { localStorage.setItem(SIDEBAR_KEY, v ? "0" : "1"); } catch { /* ignore */ }
-      return !v;
-    });
-  }
 
   /* ----------------------- Merge live data + sample ----------------------- */
 
@@ -958,9 +924,9 @@ export default function AdminDashboardPage() {
       value: <CountUp value={m.total} format={(v) => formatNumber(Math.round(v))} />,
       note: bookingsDelta !== null ? `vs previous ${range} days` : "All time",
       icon: "calendar",
-      spark: windowed?.map((p) => p.bookings), sparkColor: "#2563eb", delta: bookingsDelta,
+      spark: windowed?.map((p) => p.bookings), sparkColor: BRAND, delta: bookingsDelta,
     },
-    { label: "Open bookings", value: <CountUp value={m.open} format={(v) => formatNumber(Math.round(v))} />, note: `${formatNumber(m.pending)} pending Â· ${formatNumber(m.accepted)} accepted`, icon: "pulse" },
+    { label: "Open bookings", value: <CountUp value={m.open} format={(v) => formatNumber(Math.round(v))} />, note: `${formatNumber(m.pending)} pending · ${formatNumber(m.accepted)} accepted`, icon: "pulse" },
     {
       label: "Completion rate",
       value: <CountUp value={m.completionRate} format={formatPercent} />,
@@ -970,7 +936,7 @@ export default function AdminDashboardPage() {
     },
     {
       label: "Revenue",
-      value: view.revenue !== undefined ? <CountUp value={view.revenue} format={(v) => formatCurrency(Math.round(v))} /> : "â€”",
+      value: view.revenue !== undefined ? <CountUp value={view.revenue} format={(v) => formatCurrency(Math.round(v))} /> : "—",
       note: view.revenue !== undefined ? (revenueDelta !== null ? `vs previous ${range} days` : "From completed bookings") : "Needs revenueTotal from the API",
       icon: "rupee",
       spark: availableMetrics.includes("revenue") ? windowed?.map((p) => p.revenue ?? 0) : undefined,
@@ -978,114 +944,33 @@ export default function AdminDashboardPage() {
     },
     {
       label: "Pending verifications",
-      value: pendingVerifications !== undefined ? <CountUp value={pendingVerifications} format={(v) => formatNumber(Math.round(v))} /> : "â€”",
+      value: pendingVerifications !== undefined ? <CountUp value={pendingVerifications} format={(v) => formatNumber(Math.round(v))} /> : "—",
       note: pendingVerifications !== undefined ? "Providers and agents" : "Needs verification counts from the API",
       icon: "shield", sample: view.isSample.verification,
     },
   ];
 
   const funnel = [
-    { label: "Booked", value: m.total, pct: m.total > 0 ? 100 : 0, color: "#2563eb" },
-    { label: "Accepted", value: m.accepted + m.completed, pct: m.acceptanceRate, color: "#3b82f6" },
+    { label: "Booked", value: m.total, pct: m.total > 0 ? 100 : 0, color: BRAND },
+    { label: "Accepted", value: m.accepted + m.completed, pct: m.acceptanceRate, color: "#F5A04A" },
     { label: "Completed", value: m.completed, pct: m.completionRate, color: "#10b981" },
   ];
 
-  const sidebarW = collapsed ? "lg:w-[76px]" : "lg:w-64";
-  const contentPad = collapsed ? "lg:pl-[76px]" : "lg:pl-64";
-  const hideWhenCollapsed = collapsed ? "lg:hidden" : "";
 
   /* -------------------------------- Render -------------------------------- */
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900">
-      {menuOpen && (
-        <button aria-label="Close navigation menu" className="fixed inset-0 z-40 bg-slate-950/50 lg:hidden" onClick={() => setMenuOpen(false)} />
-      )}
+    <main className="min-h-screen bg-[#faf8f6] text-slate-900">
 
-      {/* Sidebar */}
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-slate-950 transition-[transform,width] duration-200 motion-reduce:transition-none lg:translate-x-0 ${sidebarW} ${
-          menuOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        <div className={`flex h-16 items-center gap-3 border-b border-white/10 px-5 ${collapsed ? "lg:justify-center lg:px-0" : ""}`}>
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-base font-bold text-white">U</div>
-          <div className={`leading-tight ${hideWhenCollapsed}`}>
-            <p className="text-sm font-semibold text-white">Urbino Help</p>
-            <p className="text-xs text-slate-500">Admin console</p>
-          </div>
-        </div>
-
-        <nav className="flex-1 space-y-5 overflow-y-auto overflow-x-hidden px-3 py-5">
-          {NAV_GROUPS.map((group) => (
-            <div key={group.title}>
-              <p className={`mb-2 px-3 text-xs font-medium text-slate-500 ${hideWhenCollapsed}`}>{group.title}</p>
-              {collapsed && <div className="mx-3 mb-2 hidden border-t border-white/10 lg:block" />}
-              <ul className="space-y-0.5">
-                {group.items.map((item) => (
-                  <li key={item.label}>
-                    {item.active ? (
-                      <div
-                        aria-current="page"
-                        title={item.label}
-                        className={`relative flex items-center gap-3 rounded-lg bg-white/10 px-3 py-2.5 text-sm font-medium text-white ${collapsed ? "lg:justify-center lg:px-0" : ""}`}
-                      >
-                        <span className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-blue-500" />
-                        <Icon name={item.icon} />
-                        <span className={hideWhenCollapsed}>{item.label}</span>
-                      </div>
-                    ) : (
-                      <div
-                        aria-disabled="true"
-                        title={`${item.label} isn't connected yet`}
-                        className={`flex cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-slate-500 ${collapsed ? "lg:justify-center lg:px-0" : ""}`}
-                      >
-                        <Icon name={item.icon} />
-                        <span className={hideWhenCollapsed}>{item.label}</span>
-                        {"badge" in item && item.badge === "pending" && m.pending > 0 && (
-                          <span className={`ml-auto rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-semibold tabular-nums text-amber-400 ${hideWhenCollapsed}`}>
-                            {formatNumber(m.pending)}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </nav>
-
-        <div className="border-t border-white/10 p-3">
-          <button
-            onClick={toggleCollapsed}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className={`mb-2 hidden w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-400 transition hover:bg-white/5 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 lg:flex ${collapsed ? "justify-center px-0" : ""}`}
-          >
-            <Icon name={collapsed ? "right" : "left"} size={16} />
-            <span className={hideWhenCollapsed}>Collapse</span>
-          </button>
-          <div className={`flex items-center gap-3 px-1 py-1 ${collapsed ? "lg:justify-center" : ""}`}>
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/10 text-sm font-semibold text-white">A</span>
-            <div className={`min-w-0 flex-1 leading-tight ${hideWhenCollapsed}`}>
-              <p className="truncate text-sm font-medium text-white">Administrator</p>
-              <p className="text-xs text-slate-500">Platform admin</p>
-            </div>
-            <button onClick={signOut} aria-label="Sign out" title="Sign out" className={`rounded-md p-2 text-slate-400 hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${hideWhenCollapsed}`}>
-              <Icon name="logout" size={16} />
-            </button>
-          </div>
-        </div>
-      </aside>
-
-      <div className={`transition-[padding] duration-200 motion-reduce:transition-none ${contentPad}`}>
+      <div>
         {/* Top bar */}
         <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
           <div className="flex h-16 items-center justify-between gap-4 px-4 sm:px-8">
             <div className="flex items-center gap-3">
-              <button aria-label="Open navigation menu" onClick={() => setMenuOpen(true)} className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 lg:hidden">
+              <button aria-label="Open navigation menu" onClick={() => window.dispatchEvent(new Event("urbino:admin-open-menu"))} className={`rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-slate-50 lg:hidden ${FOCUS}`}>
                 <Icon name="menu" />
               </button>
+              <UrbinoLogo className="h-8 w-8 sm:hidden" />
               <nav aria-label="Breadcrumb" className="hidden text-sm text-slate-500 sm:block">
                 Operations <span className="mx-1.5 text-slate-300">/</span>
                 <span className="font-medium text-slate-900">Overview</span>
@@ -1104,7 +989,7 @@ export default function AdminDashboardPage() {
                 }}
                 placeholder="Search bookings, customers, services"
                 aria-label="Search bookings"
-                className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-16 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-600/15"
+                className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-16 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#E8692A] focus:bg-white focus:ring-4 focus:ring-[#E8692A]/15"
               />
               <kbd className="pointer-events-none absolute inset-y-0 right-3 my-auto hidden h-5 items-center rounded border border-slate-200 bg-white px-1.5 text-[11px] font-medium text-slate-500 lg:flex">
                 {modKey} K
@@ -1116,16 +1001,16 @@ export default function AdminDashboardPage() {
                 onClick={() => setLive((v) => !v)}
                 aria-pressed={live}
                 title={live ? "Auto-refresh is on. Click to pause." : "Auto-refresh is paused. Click to resume."}
-                className="hidden items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 lg:inline-flex"
+                className={`hidden items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 transition hover:bg-slate-50 lg:inline-flex ${FOCUS}`}
               >
                 <span className="relative flex h-2 w-2">
                   {live && !error && <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60 motion-reduce:animate-none" />}
                   <span className={`relative inline-flex h-2 w-2 rounded-full ${error ? "bg-rose-500" : live ? "bg-emerald-500" : "bg-slate-300"}`} />
                 </span>
-                {error ? "Offline" : live ? (updatedLabel ? `Live Â· ${updatedLabel}` : "Live") : "Paused"}
+                {error ? "Offline" : live ? (updatedLabel ? `Live · ${updatedLabel}` : "Live") : "Paused"}
               </button>
 
-              <button onClick={() => void load(true)} disabled={loading || refreshing} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 disabled:cursor-wait disabled:opacity-60">
+              <button onClick={() => void load(true)} disabled={loading || refreshing} className={`inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60 ${FOCUS}`}>
                 <span className={refreshing ? "animate-spin motion-reduce:animate-none" : ""}><Icon name="refresh" size={16} /></span>
                 <span className="hidden sm:inline">{refreshing ? "Refreshing" : "Refresh"}</span>
               </button>
@@ -1135,11 +1020,11 @@ export default function AdminDashboardPage() {
                   onClick={() => { setBellOpen((v) => !v); setProfileOpen(false); }}
                   aria-label={`Notifications${alerts.length ? `, ${alerts.length} items` : ""}`}
                   aria-expanded={bellOpen}
-                  className="relative rounded-lg border border-slate-200 bg-white p-2 text-slate-600 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                  className={`relative rounded-lg border border-slate-200 bg-white p-2 text-slate-600 transition hover:bg-slate-50 ${FOCUS}`}
                 >
                   <Icon name="bell" size={18} />
                   {alerts.length > 0 && (
-                    <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-semibold text-white">{alerts.length}</span>
+                    <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#E8692A] px-1 text-[10px] font-semibold text-white">{alerts.length}</span>
                   )}
                 </button>
                 {bellOpen && (
@@ -1169,9 +1054,9 @@ export default function AdminDashboardPage() {
                   onClick={() => { setProfileOpen((v) => !v); setBellOpen(false); }}
                   aria-haspopup="menu"
                   aria-expanded={profileOpen}
-                  className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white py-1.5 pl-1.5 pr-2.5 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                  className={`flex items-center gap-2 rounded-lg border border-slate-200 bg-white py-1.5 pl-1.5 pr-2.5 transition hover:bg-slate-50 ${FOCUS}`}
                 >
-                  <span className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-900 text-xs font-semibold text-white">A</span>
+                  <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[#1a110b] text-xs font-semibold text-white">A</span>
                   <span className="hidden text-sm font-medium text-slate-700 xl:inline">Administrator</span>
                   <Icon name="chevron" size={14} />
                 </button>
@@ -1211,7 +1096,7 @@ export default function AdminDashboardPage() {
                 role="switch"
                 aria-checked={sampleOn}
                 onClick={() => setSampleOn((v) => !v)}
-                className={`relative h-6 w-11 shrink-0 rounded-full transition focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 ${sampleOn ? "bg-blue-600" : "bg-slate-300"}`}
+                className={`relative h-6 w-11 shrink-0 rounded-full transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E8692A] focus-visible:ring-offset-2 ${sampleOn ? "bg-[#E8692A]" : "bg-slate-300"}`}
               >
                 <span className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform motion-reduce:transition-none ${sampleOn ? "translate-x-5" : ""}`} />
               </button>
@@ -1226,7 +1111,7 @@ export default function AdminDashboardPage() {
                 <div>
                   <h2 className="font-semibold text-slate-900">Couldn't load the dashboard</h2>
                   <p className="mt-1 text-sm text-slate-500">{error}</p>
-                  <button onClick={() => void load()} className="mt-4 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2">
+                  <button onClick={() => void load()} className="mt-4 rounded-lg bg-[#E8692A] px-4 py-2 text-sm font-semibold text-white hover:bg-[#D45A1F] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E8692A] focus-visible:ring-offset-2">
                     Try again
                   </button>
                 </div>
@@ -1262,13 +1147,13 @@ export default function AdminDashboardPage() {
               {/* KPIs */}
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {kpis.map((k) => (
-                  <article key={k.label} className="rounded-xl border border-slate-200 bg-white p-5 transition hover:border-slate-300 hover:shadow-sm">
+                  <article key={k.label} className="rounded-xl border border-slate-200 bg-white p-5 transition hover:border-orange-200 hover:shadow-sm">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-medium text-slate-500">{k.label}</p>
                         {k.sample && <SampleTag />}
                       </div>
-                      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-slate-600"><Icon name={k.icon} /></span>
+                      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-orange-50 text-[#E8692A]"><Icon name={k.icon} /></span>
                     </div>
                     <p className="mt-3 text-3xl font-semibold tabular-nums tracking-tight text-slate-950">{k.value}</p>
                     <div className="mt-2 flex items-end justify-between gap-3">
@@ -1306,7 +1191,7 @@ export default function AdminDashboardPage() {
                     <>
                       <dl className="mb-5 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
                         <div>
-                          <dt className="text-xs text-slate-500">Total Â· last {range} days</dt>
+                          <dt className="text-xs text-slate-500">Total · last {range} days</dt>
                           <dd className="mt-1 text-xl font-semibold tabular-nums tracking-tight text-slate-950">{formatMetric(activeMetric, trendStats.total)}</dd>
                         </div>
                         <div>
@@ -1323,7 +1208,7 @@ export default function AdminDashboardPage() {
                         <div>
                           <dt className="text-xs text-slate-500">vs previous period</dt>
                           <dd className={`mt-1 text-xl font-semibold tabular-nums tracking-tight ${trendStats.delta === null ? "text-slate-400" : trendStats.delta >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
-                            {trendStats.delta === null ? "â€”" : `${trendStats.delta >= 0 ? "+" : "âˆ’"}${Math.abs(trendStats.delta).toFixed(1)}%`}
+                            {trendStats.delta === null ? "—" : `${trendStats.delta >= 0 ? "+" : "−"}${Math.abs(trendStats.delta).toFixed(1)}%`}
                           </dd>
                         </div>
                       </dl>
@@ -1349,7 +1234,7 @@ export default function AdminDashboardPage() {
                             checked={showCompare}
                             disabled={!canCompare}
                             onChange={(e) => setCompare(e.target.checked)}
-                            className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600/30"
+                            className="h-4 w-4 rounded border-slate-300 text-[#E8692A] focus:ring-[#E8692A]/30"
                           />
                           Compare with previous period
                         </label>
@@ -1389,7 +1274,7 @@ export default function AdminDashboardPage() {
                           { label: "Agent documents", value: view.pendingAgents ?? 0, icon: "file" },
                         ].map((row) => (
                           <li key={row.label} className="flex items-center gap-3">
-                            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-slate-600"><Icon name={row.icon} size={17} /></span>
+                            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-orange-50 text-[#E8692A]"><Icon name={row.icon} size={17} /></span>
                             <span className="flex-1 text-sm text-slate-700">{row.label}</span>
                             <span className="text-lg font-semibold tabular-nums text-slate-950">{formatNumber(row.value)}</span>
                           </li>
@@ -1411,7 +1296,7 @@ export default function AdminDashboardPage() {
                     recent.length > 0 ? (
                       <button
                         onClick={() => { exportCsv(filtered); notify(`Exported ${filtered.length} ${filtered.length === 1 ? "booking" : "bookings"}`); }}
-                        className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                        className={`inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 ${FOCUS}`}
                       >
                         <Icon name="download" size={16} />
                         Export CSV
@@ -1431,7 +1316,7 @@ export default function AdminDashboardPage() {
                               role="tab"
                               aria-selected={statusFilter === s}
                               onClick={() => { setStatusFilter(s); setPage(0); }}
-                              className={`rounded-full px-3 py-1.5 text-xs font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 ${statusFilter === s ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
+                              className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${FOCUS} ${statusFilter === s ? "bg-[#1a110b] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
                             >
                               {s === "all" ? "All" : STATUS_STYLES[s].label}
                               <span className="ml-1.5 tabular-nums opacity-70">{s === "all" ? recent.length : statusCounts[s] ?? 0}</span>
@@ -1446,7 +1331,7 @@ export default function AdminDashboardPage() {
                             onChange={(e) => { setQuery(e.target.value); setPage(0); }}
                             placeholder="Search bookings"
                             aria-label="Search bookings"
-                            className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/15"
+                            className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#E8692A] focus:ring-4 focus:ring-[#E8692A]/15"
                           />
                         </div>
                       </div>
@@ -1460,12 +1345,12 @@ export default function AdminDashboardPage() {
                               <th className="px-3 py-2.5 font-medium">Service</th>
                               <th className="px-3 py-2.5 font-medium">Status</th>
                               <th className="px-3 py-2.5 text-right font-medium" aria-sort={sort.key === "amount" ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}>
-                                <button onClick={() => toggleSort("amount")} className="inline-flex items-center gap-1 rounded hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
+                                <button onClick={() => toggleSort("amount")} className={`inline-flex items-center gap-1 rounded hover:text-slate-900 ${FOCUS}`}>
                                   Amount <Icon name="sort" size={13} />
                                 </button>
                               </th>
                               <th className="px-5 py-2.5 text-right font-medium sm:px-6" aria-sort={sort.key === "createdAt" ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}>
-                                <button onClick={() => toggleSort("createdAt")} className="inline-flex items-center gap-1 rounded hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
+                                <button onClick={() => toggleSort("createdAt")} className={`inline-flex items-center gap-1 rounded hover:text-slate-900 ${FOCUS}`}>
                                   Created <Icon name="sort" size={13} />
                                 </button>
                               </th>
@@ -1473,18 +1358,18 @@ export default function AdminDashboardPage() {
                           </thead>
                           <tbody className="divide-y divide-slate-100">
                             {pageRows.map((r) => (
-                              <tr key={r.id} onClick={() => setSelected(r)} className="cursor-pointer transition hover:bg-slate-50/80">
+                              <tr key={r.id} onClick={() => setSelected(r)} className="cursor-pointer transition hover:bg-orange-50/40">
                                 <td className="px-5 py-3 sm:px-6">
                                   <button
                                     onClick={(e) => { e.stopPropagation(); setSelected(r); }}
-                                    className="rounded font-medium tabular-nums text-blue-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                                    className={`rounded font-medium tabular-nums text-[#C9531A] hover:underline ${FOCUS}`}
                                   >
                                     {r.id}
                                   </button>
                                 </td>
                                 <td className="px-3 py-3">
                                   <div className="flex items-center gap-2.5">
-                                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-[11px] font-semibold text-slate-600">{initials(r.customer)}</span>
+                                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-orange-50 text-[11px] font-semibold text-[#C9531A]">{initials(r.customer)}</span>
                                     <span className="text-slate-700">{r.customer}</span>
                                   </div>
                                 </td>
@@ -1495,7 +1380,7 @@ export default function AdminDashboardPage() {
                                 <td className="px-3 py-3">
                                   <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset ${STATUS_STYLES[r.status].pill}`}>{STATUS_STYLES[r.status].label}</span>
                                 </td>
-                                <td className="px-3 py-3 text-right tabular-nums text-slate-900">{r.amount !== undefined ? formatCurrency(r.amount) : "â€”"}</td>
+                                <td className="px-3 py-3 text-right tabular-nums text-slate-900">{r.amount !== undefined ? formatCurrency(r.amount) : "—"}</td>
                                 <td className="px-5 py-3 text-right text-xs text-slate-500 sm:px-6">{formatDateTime(r.createdAt)}</td>
                               </tr>
                             ))}
@@ -1507,14 +1392,14 @@ export default function AdminDashboardPage() {
                       {filtered.length > 0 && (
                         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
                           <p className="tabular-nums">
-                            Showing {safePage * PAGE_SIZE + 1}â€“{Math.min(filtered.length, (safePage + 1) * PAGE_SIZE)} of {filtered.length}
+                            Showing {safePage * PAGE_SIZE + 1}–{Math.min(filtered.length, (safePage + 1) * PAGE_SIZE)} of {filtered.length}
                           </p>
                           <div className="flex items-center gap-1.5">
-                            <button onClick={() => setPage(Math.max(0, safePage - 1))} disabled={safePage === 0} aria-label="Previous page" className="rounded-lg border border-slate-200 bg-white p-2 text-slate-600 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 disabled:cursor-not-allowed disabled:opacity-40">
+                            <button onClick={() => setPage(Math.max(0, safePage - 1))} disabled={safePage === 0} aria-label="Previous page" className={`rounded-lg border border-slate-200 bg-white p-2 text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 ${FOCUS}`}>
                               <Icon name="left" size={14} />
                             </button>
                             <span className="px-2 tabular-nums">Page {safePage + 1} of {pageCount}</span>
-                            <button onClick={() => setPage(Math.min(pageCount - 1, safePage + 1))} disabled={safePage >= pageCount - 1} aria-label="Next page" className="rounded-lg border border-slate-200 bg-white p-2 text-slate-600 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 disabled:cursor-not-allowed disabled:opacity-40">
+                            <button onClick={() => setPage(Math.min(pageCount - 1, safePage + 1))} disabled={safePage >= pageCount - 1} aria-label="Next page" className={`rounded-lg border border-slate-200 bg-white p-2 text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 ${FOCUS}`}>
                               <Icon name="right" size={14} />
                             </button>
                           </div>
@@ -1551,7 +1436,7 @@ export default function AdminDashboardPage() {
                           <div className="mb-1.5 flex items-center justify-between text-sm">
                             <span className="text-slate-700">{f.label}</span>
                             <span className="tabular-nums text-slate-500">
-                              <span className="font-semibold text-slate-900">{formatNumber(f.value)}</span> Â· {formatPercent(f.pct)}
+                              <span className="font-semibold text-slate-900">{formatNumber(f.value)}</span> · {formatPercent(f.pct)}
                             </span>
                           </div>
                           <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
@@ -1586,7 +1471,7 @@ export default function AdminDashboardPage() {
                             <span className="text-[11px] font-medium tabular-nums text-slate-500">{Math.round(r.avg)}</span>
                             <div className="flex w-full flex-1 items-end">
                               <div
-                                className={`w-full rounded-md transition-[height] duration-500 motion-reduce:transition-none ${isBest ? "bg-blue-600" : "bg-slate-200"}`}
+                                className={`w-full rounded-md transition-[height] duration-500 motion-reduce:transition-none ${isBest ? "bg-[#E8692A]" : "bg-orange-100"}`}
                                 style={{ height: `${Math.max(4, (r.avg / weekly.top) * 100)}%` }}
                               />
                             </div>
@@ -1613,8 +1498,8 @@ export default function AdminDashboardPage() {
                               <span className="text-slate-700">{s.name}</span>
                               <span className="font-semibold tabular-nums text-slate-900">{formatNumber(s.count)}</span>
                             </div>
-                            <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
-                              <div className="h-full rounded-full bg-blue-600" style={{ width: `${(s.count / top) * 100}%` }} />
+                            <div className="h-1.5 overflow-hidden rounded-full bg-orange-100">
+                              <div className="h-full rounded-full bg-[#E8692A]" style={{ width: `${(s.count / top) * 100}%` }} />
                             </div>
                           </li>
                         );
@@ -1630,7 +1515,7 @@ export default function AdminDashboardPage() {
                     <ul className="space-y-3.5">
                       {view.providers.map((p, i) => (
                         <li key={p.name} className="flex items-center gap-3">
-                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-semibold text-slate-600">{initials(p.name)}</span>
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-orange-50 text-xs font-semibold text-[#C9531A]">{initials(p.name)}</span>
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-sm font-medium text-slate-800">{p.name}</p>
                             <p className="text-xs text-slate-500">{formatNumber(p.completed)} completed</p>
@@ -1662,14 +1547,14 @@ export default function AdminDashboardPage() {
       {/* Booking detail drawer */}
       {selected && (
         <>
-          <button aria-label="Close booking details" className="fixed inset-0 z-[60] cursor-default bg-slate-950/40" onClick={() => setSelected(null)} />
+          <button aria-label="Close booking details" className="fixed inset-0 z-[60] cursor-default bg-stone-950/40" onClick={() => setSelected(null)} />
           <aside role="dialog" aria-modal="true" aria-labelledby="drawer-title" className="fixed inset-y-0 right-0 z-[70] flex w-full max-w-md flex-col bg-white shadow-2xl">
             <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-5">
               <div>
                 <p className="text-xs text-slate-500">Booking</p>
                 <h2 id="drawer-title" className="mt-0.5 text-xl font-semibold tabular-nums tracking-tight text-slate-950">{selected.id}</h2>
               </div>
-              <button ref={closeRef} onClick={() => setSelected(null)} aria-label="Close" className="rounded-lg border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
+              <button ref={closeRef} onClick={() => setSelected(null)} aria-label="Close" className={`rounded-lg border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-50 ${FOCUS}`}>
                 <Icon name="x" size={16} />
               </button>
             </div>
@@ -1684,7 +1569,7 @@ export default function AdminDashboardPage() {
                   { k: "Customer", v: selected.customer },
                   { k: "Service", v: selected.service },
                   { k: "Provider", v: selected.provider ?? "Not assigned" },
-                  { k: "Amount", v: selected.amount !== undefined ? formatCurrency(selected.amount) : "â€”" },
+                  { k: "Amount", v: selected.amount !== undefined ? formatCurrency(selected.amount) : "—" },
                   { k: "Created", v: formatDateTime(selected.createdAt) },
                 ].map((row) => (
                   <div key={row.k} className="flex items-center justify-between gap-4 px-4 py-3.5 text-sm">
@@ -1700,7 +1585,7 @@ export default function AdminDashboardPage() {
             </div>
 
             <div className="border-t border-slate-100 px-6 py-4">
-              <button onClick={() => void copyId(selected.id)} className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
+              <button onClick={() => void copyId(selected.id)} className={`inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 ${FOCUS}`}>
                 <Icon name="copy" size={16} />
                 Copy booking ID
               </button>
@@ -1712,7 +1597,7 @@ export default function AdminDashboardPage() {
       {/* Toast */}
       <div aria-live="polite" className="pointer-events-none fixed bottom-5 left-1/2 z-[80] -translate-x-1/2">
         {toast && (
-          <div className="rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-medium text-white shadow-lg">{toast}</div>
+          <div className="rounded-lg bg-[#1a110b] px-4 py-2.5 text-sm font-medium text-white shadow-lg">{toast}</div>
         )}
       </div>
     </main>

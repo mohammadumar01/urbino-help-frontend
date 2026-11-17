@@ -2,7 +2,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import RequireRole from "@/components/auth/RequireRole";
 import api from "@/lib/api";
+import { clearSession } from "@/lib/auth";
+import { CashCollect } from "@/components/payments/PaymentActions";
+import type { PaymentStatus } from "@/lib/paymentsApi";
 
 type Job = {
   id: number;
@@ -15,6 +19,9 @@ type Job = {
   booking_time: string;
   status: string;
   created_at: string;
+  price?: string | number | null;
+  payment_status?: PaymentStatus | null;
+  payment_method?: string | null;
 };
 
 const statusLabels: Record<string, string> = {
@@ -30,6 +37,14 @@ function normalizeStatus(status: string) {
 }
 
 export default function AgentDashboard() {
+  return (
+    <RequireRole roles={["agent"]}>
+      <AgentDashboardContent />
+    </RequireRole>
+  );
+}
+
+function AgentDashboardContent() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
@@ -59,7 +74,6 @@ export default function AgentDashboard() {
       });
 
       const data = response.data;
-      console.log("Agent Jobs API Response:", data);
 
       setJobs(data.jobs || []);
       setTotalJobs(Number(data.totalJobs || 0));
@@ -209,9 +223,16 @@ export default function AgentDashboard() {
               Refresh
             </button>
 
+            <a
+              href="/agent/profile"
+              className="rounded-xl border border-slate-300 bg-white px-4 py-2 font-semibold text-slate-700"
+            >
+              My Profile
+            </a>
+
             <button
               onClick={() => {
-                localStorage.removeItem("token");
+                clearSession();
                 window.location.href = "/login";
               }}
               className="rounded-xl bg-slate-900 px-4 py-2 font-semibold text-white"
@@ -378,6 +399,15 @@ export default function AgentDashboard() {
                       </a>
                     )}
                   </div>
+
+                  <CashCollect
+                    bookingId={job.id}
+                    bookingStatus={job.status}
+                    amount={job.price ?? null}
+                    paymentStatus={job.payment_status}
+                    paymentMethod={job.payment_method}
+                    onChange={fetchJobs}
+                  />
 
                   <div>
                     <p className="text-sm text-slate-400">

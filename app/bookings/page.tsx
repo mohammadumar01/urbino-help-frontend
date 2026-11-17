@@ -15,6 +15,9 @@ Star,
 } from "lucide-react";
 
 import api from "../../lib/api";
+import RequireRole from "../../components/auth/RequireRole";
+import PaymentActions, { PaymentBadge } from "../../components/payments/PaymentActions";
+import type { PaymentStatus } from "../../lib/paymentsApi";
 
 interface Booking {
 id: number;
@@ -27,6 +30,12 @@ created_at?: string;
 price?: string | number;
 amount?: string | number;
 provider_id?: number;
+provider_name?: string | null;
+agent_name?: string | null;
+agent_phone?: string | null;
+has_review?: boolean;
+payment_status?: PaymentStatus | null;
+payment_method?: string | null;
 }
 
 interface BookingsResponse {
@@ -36,6 +45,14 @@ bookings: Booking[];
 }
 
 export default function BookingsPage() {
+return (
+<RequireRole roles={["customer"]}>
+<BookingsContent />
+</RequireRole>
+);
+}
+
+function BookingsContent() {
 const [bookings, setBookings] = useState<Booking[]>([]);
 const [loading, setLoading] = useState(true);
 const [error, setError] = useState("");
@@ -116,10 +133,6 @@ const response = await api.put(
   `/api/booking/cancel/${bookingId}`
 );
 
-console.log(
-  "Cancel booking response:",
-  response.data
-);
 
 await fetchBookings();
 
@@ -221,10 +234,6 @@ const response = await api.put(
   }
 );
 
-console.log(
-  "Reschedule booking response:",
-  response.data
-);
 
 closeReschedule();
 
@@ -297,10 +306,8 @@ function getBookingProgress(status?: string) {
 function canManageBooking(status?: string) {
 const value = status?.toLowerCase();
 
-return (
-value !== "cancelled" &&
-value !== "completed"
-);
+// Backend sirf in statuses mein reschedule/cancel allow karta hai
+return value === "pending" || value === "provider_accepted";
 }
 
 return (
@@ -567,8 +574,24 @@ return (
             </div>
 
             {/* Price */}
-            {(booking.price !== undefined ||
-              booking.amount !== undefined) && (
+            {(booking.provider_name || booking.agent_name) && (
+              <div className="mt-5 grid gap-2 border-t border-gray-100 pt-5 text-sm sm:grid-cols-2">
+                {booking.provider_name && (
+                  <p className="text-gray-500">
+                    Provider: <span className="font-semibold text-gray-900">{booking.provider_name}</span>
+                  </p>
+                )}
+                {booking.agent_name && (
+                  <p className="text-gray-500">
+                    Professional: <span className="font-semibold text-gray-900">{booking.agent_name}</span>
+                    {booking.agent_phone && <span className="text-gray-500"> · {booking.agent_phone}</span>}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {(booking.price != null ||
+              booking.amount != null) && (
               <div className="mt-5 flex items-center justify-between border-t border-gray-100 pt-5">
 
                 <span className="text-sm text-gray-500">
@@ -583,6 +606,24 @@ return (
 
               </div>
             )}
+
+            {/* Payment */}
+            {(booking.price != null || booking.payment_status) && booking.status !== "cancelled" || booking.payment_status === "refunded" || booking.payment_status === "refund_pending" ? (
+              <div className="mt-5 border-t border-gray-100 pt-5">
+                <div className="mb-3 flex items-center justify-between">
+                  <span className="text-sm font-semibold text-gray-900">Payment</span>
+                  <PaymentBadge status={booking.payment_status} method={booking.payment_method} />
+                </div>
+                <PaymentActions
+                  bookingId={booking.id}
+                  bookingStatus={booking.status}
+                  amount={booking.price ?? null}
+                  paymentStatus={booking.payment_status}
+                  paymentMethod={booking.payment_method}
+                  onChange={() => fetchBookings(true)}
+                />
+              </div>
+            ) : null}
 
          {/* Actions */}
 {canManageBooking(booking.status) && (
@@ -624,7 +665,7 @@ return (
 {booking.status?.toLowerCase() === "completed" && (
   <div className="mt-6 border-t border-gray-100 pt-5">
 
-    {reviewedIds.includes(booking.id) ? (
+    {booking.has_review || reviewedIds.includes(booking.id) ? (
       <p className="text-sm font-semibold text-green-700">
         ✓ Review submitted. Thank you!
       </p>

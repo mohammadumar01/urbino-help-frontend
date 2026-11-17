@@ -2,6 +2,7 @@
 "use client";
 
 import Link from "next/link";
+import RequireRole from "@/components/auth/RequireRole";
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
 
@@ -70,6 +71,14 @@ const SKILL_OPTIONS = [
 ];
 
 export default function AgentProfilePage() {
+  return (
+    <RequireRole roles={["agent"]}>
+      <AgentProfileContent />
+    </RequireRole>
+  );
+}
+
+function AgentProfileContent() {
   const [form, setForm] = useState<ProfileForm>(initialForm);
 
   const [citySearch, setCitySearch] = useState("");
@@ -600,7 +609,6 @@ export default function AgentProfilePage() {
                     const file = e.target.files?.[0];
 
                     if (file) {
-                      console.log("Selected document:", file.name);
                     }
                   }}
                   className="mt-4 block w-full rounded-xl border border-slate-300 bg-white p-3"

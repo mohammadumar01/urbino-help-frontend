@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import RequireRole from "@/components/auth/RequireRole";
 import { useRouter } from "next/navigation";
 import {
   CalendarDays,
@@ -15,6 +16,9 @@ import {
 } from "lucide-react";
 
 import api from "../../../lib/api";
+import { clearSession } from "@/lib/auth";
+import { CashCollect } from "@/components/payments/PaymentActions";
+import type { PaymentStatus } from "@/lib/paymentsApi";
 
 interface Booking {
   id: number;
@@ -28,6 +32,9 @@ interface Booking {
   status: string;
   agent_id?: number | null;
   agent_assigned_at?: string | null;
+  price?: string | number | null;
+  payment_status?: PaymentStatus | null;
+  payment_method?: string | null;
 }
 
 interface PendingBookingsResponse {
@@ -50,6 +57,14 @@ interface Agent {
 }
 
 export default function ProviderDashboard() {
+  return (
+    <RequireRole roles={["provider"]}>
+      <ProviderDashboardContent />
+    </RequireRole>
+  );
+}
+
+function ProviderDashboardContent() {
   const router = useRouter();
 
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -145,7 +160,7 @@ async function fetchAgents() {
     setAgentsLoading(true);
     setAgentsError("");
 
-    const response = await api.get("/api/provider-agents");
+    const response = await api.get("/api/provider/agents");
 
     setAgents(response.data.agents || []);
   } catch (error: any) {
@@ -260,8 +275,7 @@ async function fetchAgents() {
 
   // Logout
   function handleLogout() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    clearSession();
 
     router.push("/login");
   }
@@ -725,6 +739,15 @@ async function fetchAgents() {
               <p>Phone: {booking.customer_phone}</p>
             )}
           </div>
+
+          <CashCollect
+            bookingId={booking.id}
+            bookingStatus={booking.status}
+            amount={booking.price ?? null}
+            paymentStatus={booking.payment_status}
+            paymentMethod={booking.payment_method}
+            onChange={fetchMyBookings}
+          />
 
           {booking.status === "provider_accepted" &&
             !booking.agent_id && (

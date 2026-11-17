@@ -104,10 +104,7 @@ export default function ServiceDetailsPage() {
           setProvidersLoading(true);
           setProviderError("");
 
-          const providerData = await getProvidersByService(
-            serviceId,
-            "Kota"
-          );
+          const providerData = await getProvidersByService(serviceId);
 
           if (cancelled) return;
 
@@ -438,7 +435,7 @@ export default function ServiceDetailsPage() {
             </h2>
 
             <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-600">
-              Verified professionals available for this service in Kota.
+              Verified professionals available for this service.
             </p>
           </div>
 
@@ -488,7 +485,7 @@ export default function ServiceDetailsPage() {
 
                 <p className="mt-2 text-sm text-gray-500">
                   No verified professional is currently available
-                  for this service in Kota.
+                  for this service yet.
                 </p>
               </div>
             )}

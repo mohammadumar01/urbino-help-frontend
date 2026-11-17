@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent, type KeyboardEvent } from "react";
+import { useEffect, useId, useState, type FormEvent, type KeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5500";
@@ -38,6 +38,36 @@ function Icon({ d, className = "h-5 w-5" }: { d: string; className?: string }) {
       aria-hidden="true"
     >
       <path d={d} />
+    </svg>
+  );
+}
+
+/** Urbino Help logo: round badge with gradient disc, white U-ring and H cutouts. */
+function UrbinoLogo({ className = "h-12 w-12" }: { className?: string }) {
+  const uid = useId().replace(/:/g, "");
+  const ring = `ring-${uid}`;
+  const disc = `disc-${uid}`;
+
+  return (
+    <svg viewBox="0 0 640 640" className={className} role="img" aria-label="Urbino Help">
+      <defs>
+        <linearGradient id={ring} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="640">
+          <stop offset="0" stopColor="#E5402B" />
+          <stop offset="0.5" stopColor="#EF7A2D" />
+          <stop offset="1" stopColor="#F4B63F" />
+        </linearGradient>
+        <linearGradient id={disc} gradientUnits="userSpaceOnUse" x1="0" y1="89" x2="0" y2="545">
+          <stop offset="0" stopColor="#F8B533" />
+          <stop offset="0.5" stopColor="#F0702B" />
+          <stop offset="1" stopColor="#DD3226" />
+        </linearGradient>
+      </defs>
+      <circle cx="320" cy="320" r="316" fill="#fff" stroke={`url(#${ring})`} strokeWidth="8" />
+      <circle cx="320" cy="317" r="228" fill={`url(#${disc})`} />
+      <path d="M192 139V376A128 128 0 0 0 448 376V139" fill="none" stroke="#fff" strokeWidth="30" />
+      <path d="M207 94V376A113 113 0 0 0 433 376V94Z" fill={`url(#${disc})`} />
+      <path d="M262 60V177A58 58 0 0 0 378 177V60Z" fill="#fff" />
+      <path d="M262 485V349A58 58 0 0 1 378 349V485Z" fill="#fff" />
     </svg>
   );
 }
@@ -83,7 +113,6 @@ export default function AdminLoginPage() {
 
     try {
       const response = await fetch(`${API_URL}/api/auth/login`, {
-
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim(), password }),
@@ -108,7 +137,6 @@ export default function AdminLoginPage() {
       }
 
       try {
-
         sessionStorage.setItem("adminToken", data.token);
         if (remember) localStorage.setItem(EMAIL_KEY, email.trim());
         else localStorage.removeItem(EMAIL_KEY);
@@ -132,24 +160,22 @@ export default function AdminLoginPage() {
   }
 
   const inputClass =
-    "w-full rounded-lg border bg-white px-3.5 py-3 text-[15px] text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-400 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/15 disabled:bg-slate-50 disabled:text-slate-500 " +
+    "w-full rounded-lg border bg-white px-3.5 py-3 text-[15px] text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-400 focus:border-[#E8692A] focus:ring-4 focus:ring-[#E8692A]/15 disabled:bg-slate-50 disabled:text-slate-500 " +
     (error ? "border-red-300" : "border-slate-300");
 
   return (
     <main className="min-h-screen bg-white text-slate-900 lg:grid lg:grid-cols-[1.05fr_1fr]">
       {/* LEFT: BRAND PANEL */}
       <section
-        className="relative hidden overflow-hidden bg-slate-950 px-12 py-12 text-white lg:flex lg:flex-col lg:justify-between xl:px-20"
+        className="relative hidden overflow-hidden bg-[#1a110b] px-12 py-12 text-white lg:flex lg:flex-col lg:justify-between xl:px-20"
         style={{
           backgroundImage:
-            "radial-gradient(60% 50% at 85% 0%, rgba(37,99,235,0.35) 0%, rgba(2,6,23,0) 70%), linear-gradient(rgba(148,163,184,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(148,163,184,0.06) 1px, transparent 1px)",
-          backgroundSize: "100% 100%, 44px 44px, 44px 44px",
+            "radial-gradient(60% 50% at 85% 0%, rgba(238,116,48,0.38) 0%, rgba(26,17,11,0) 70%), radial-gradient(50% 40% at 0% 100%, rgba(222,58,36,0.18) 0%, rgba(26,17,11,0) 70%), linear-gradient(rgba(255,237,220,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255,237,220,0.045) 1px, transparent 1px)",
+          backgroundSize: "100% 100%, 100% 100%, 44px 44px, 44px 44px",
         }}
       >
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600 text-lg font-bold shadow-lg shadow-blue-900/40">
-            U
-          </div>
+        <div className="flex items-center gap-4">
+          <UrbinoLogo className="h-12 w-12 drop-shadow-[0_6px_16px_rgba(238,116,48,0.35)]" />
           <span className="text-lg font-semibold tracking-tight">Urbino Help</span>
         </div>
 
@@ -157,7 +183,7 @@ export default function AdminLoginPage() {
           <h1 className="text-4xl font-semibold leading-[1.15] tracking-tight xl:text-5xl">
             Run every service request from one place.
           </h1>
-          <p className="mt-5 max-w-md text-base leading-7 text-slate-400">
+          <p className="mt-5 max-w-md text-base leading-7 text-stone-400">
             The administration workspace for Urbino Help, built for the team that
             keeps customers and professionals connected.
           </p>
@@ -165,20 +191,20 @@ export default function AdminLoginPage() {
           <ul className="mt-12 space-y-6">
             {FEATURES.map((f) => (
               <li key={f.title} className="flex gap-4">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/5 text-blue-300 ring-1 ring-white/10">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/5 text-orange-300 ring-1 ring-white/10">
                   <Icon d={f.icon} />
                 </span>
                 <div>
                   <p className="text-sm font-semibold text-white">{f.title}</p>
-                  <p className="mt-1 text-sm leading-6 text-slate-400">{f.text}</p>
+                  <p className="mt-1 text-sm leading-6 text-stone-400">{f.text}</p>
                 </div>
               </li>
             ))}
           </ul>
         </div>
 
-        <p className="text-xs text-slate-500">
-          Â© {new Date().getFullYear()} Urbino Help. All rights reserved.
+        <p className="text-xs text-stone-500">
+          © {new Date().getFullYear()} Urbino Help. All rights reserved.
         </p>
       </section>
 
@@ -187,9 +213,7 @@ export default function AdminLoginPage() {
         <div className="w-full max-w-[400px]">
           {/* Mobile brand */}
           <div className="mb-10 flex items-center gap-3 lg:hidden">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600 text-lg font-bold text-white">
-              U
-            </div>
+            <UrbinoLogo className="h-11 w-11" />
             <span className="text-lg font-semibold tracking-tight">Urbino Help</span>
           </div>
 
@@ -266,7 +290,7 @@ export default function AdminLoginPage() {
                   onClick={() => setShowPassword((v) => !v)}
                   aria-label={showPassword ? "Hide password" : "Show password"}
                   aria-pressed={showPassword}
-                  className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-lg text-slate-400 transition hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                  className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-lg text-slate-400 transition hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E8692A]"
                 >
                   {showPassword ? (
                     <Icon d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.1A9.8 9.8 0 0 1 12 5c5 0 9 4.5 10 7-.4 1-1.2 2.3-2.4 3.5M6.6 6.6C4.3 8 2.7 10.2 2 12c1 2.5 5 7 10 7 1.5 0 2.9-.4 4.1-1" />
@@ -287,7 +311,7 @@ export default function AdminLoginPage() {
                 type="checkbox"
                 checked={remember}
                 onChange={(e) => setRemember(e.target.checked)}
-                className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600/30"
+                className="h-4 w-4 rounded border-slate-300 text-[#E8692A] focus:ring-[#E8692A]/30"
               />
               Remember my email on this device
             </label>
@@ -295,7 +319,7 @@ export default function AdminLoginPage() {
             <button
               type="submit"
               disabled={loading || !email || !password}
-              className="flex w-full items-center justify-center gap-2.5 rounded-lg bg-blue-600 px-4 py-3 text-[15px] font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-600/30 active:bg-blue-800 disabled:cursor-not-allowed disabled:bg-blue-600/50"
+              className="flex w-full items-center justify-center gap-2.5 rounded-lg bg-[#E8692A] px-4 py-3 text-[15px] font-semibold text-white shadow-sm transition hover:bg-[#D45A1F] focus:outline-none focus-visible:ring-4 focus-visible:ring-[#E8692A]/30 active:bg-[#BF4E18] disabled:cursor-not-allowed disabled:bg-[#E8692A]/50"
             >
               {loading && (
                 <svg

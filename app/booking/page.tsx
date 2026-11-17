@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 
 import api from "../../lib/api";
+import RequireRole from "../../components/auth/RequireRole";
+import PaymentActions from "../../components/payments/PaymentActions";
 
 interface Service {
   id: number;
@@ -44,6 +46,7 @@ interface Booking {
   status?: string;
   booking_date?: string;
   booking_time?: string;
+  price?: string | number | null;
 }
 
   function BookingContent() {
@@ -101,7 +104,6 @@ interface Booking {
           {
             params: {
               service_id: serviceId,
-              service_area: "Kota",
             },
           }
         );
@@ -167,15 +169,13 @@ interface Booking {
       const response = await api.post(
         "/api/booking/create",
         {
-          service_name: service.name,
+          service_id: service.id,
           address,
           booking_date: bookingDate,
           booking_time: bookingTime,
           provider_id: Number(selectedProviderId),
         }
       );
-
-      console.log("Booking response:", response.data);
 
       const booking: Booking =
         response.data.booking;
@@ -265,6 +265,18 @@ interface Booking {
               )}
             </p>
           </div>
+
+          {successBooking.price != null && (
+            <div className="mt-6 rounded-2xl border border-gray-200 p-5 text-left">
+              <p className="mb-1 text-sm font-semibold text-gray-900">Pay now or after the service</p>
+              <p className="mb-4 text-xs text-gray-500">Total ₹{Number(successBooking.price).toLocaleString("en-IN")}. No hidden charges.</p>
+              <PaymentActions
+                bookingId={successBooking.id}
+                bookingStatus={successBooking.status}
+                amount={successBooking.price}
+              />
+            </div>
+          )}
 
           <Link
             href="/bookings"
@@ -466,8 +478,8 @@ interface Booking {
 
                 {providers.length === 0 ? (
                   <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
-                    No providers found for this service in
-                    Kota. Please try again later or select
+                    No providers are available for this service
+                    yet. Please try again later or select
                     another service.
                   </div>
                 ) : (
@@ -633,7 +645,9 @@ export default function BookingPage() {
         </main>
       }
     >
-      <BookingContent />
+      <RequireRole roles={["customer"]}>
+        <BookingContent />
+      </RequireRole>
     </Suspense>
   );
 }

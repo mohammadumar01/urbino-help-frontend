@@ -1,14 +1,25 @@
 "use client";
 
-import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
+import { FormEvent, Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Loader2, ArrowLeft } from "lucide-react";
 
-import api from "../../lib/api";
+import api, { apiError } from "../../lib/api";
+import UrbinoLogo from "../../components/brand/UrbinoLogo";
+import { ROLE_HOME, saveSession, type Role } from "../../lib/auth";
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,47 +39,23 @@ export default function LoginPage() {
         password,
       });
 
-      console.log("Login response:", response.data);
+      const { token, user } = response.data;
 
-      const token = response.data.token;
-
-      if (!token) {
-        setError("Login successful but token was not received.");
+      if (!token || !user) {
+        setError("Login failed. Please try again.");
         return;
       }
 
-      // Save JWT token
-      localStorage.setItem("token", token);
+      saveSession(token, user);
 
-      // Save user information
-      localStorage.setItem(
-        "user",
-        JSON.stringify(response.data.user)
-      );
+      // ?next=/booking?... wapas wahi le jao jahan se aaye the (sirf apni site ke andar)
+      const next = searchParams.get("next");
+      const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : null;
+      const role = (user.role === "user" ? "customer" : user.role) as Role;
+      router.push(safeNext && role === "customer" ? safeNext : ROLE_HOME[role] || "/services");
 
-      // Redirect user according to role
-        const user = response.data.user;
-
-        if (user.role === "provider") {
-          router.push("/provider/dashboard");
-
-        } else if (user.role === "admin") {
-          router.push("/admin/dashboard");
-
-        } else if (user.role === "agent") {
-          router.push("/agent/dashboard");
-
-        } else {
-          router.push("/services");
-        }
-
-    } catch (error: any) {
-      console.error("Login failed:", error);
-
-      setError(
-        error?.response?.data?.message ||
-          "Invalid email or password."
-      );
+    } catch (error) {
+      setError(apiError(error, "Invalid email or password."));
 
     } finally {
       setLoading(false);
@@ -100,9 +87,12 @@ export default function LoginPage() {
 
           <div className="text-center">
 
-            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-600">
-              Urbino
-            </p>
+            <Link href="/" className="mx-auto flex w-fit flex-col items-center gap-2" aria-label="Urbino Help home">
+              <UrbinoLogo className="h-14 w-14 drop-shadow-[0_6px_16px_rgba(238,116,48,0.30)]" />
+              <span className="text-lg font-bold tracking-tight text-gray-950">
+                Urbino<span className="text-orange-500"> Help</span>
+              </span>
+            </Link>
 
             <h1 className="mt-3 text-3xl font-bold tracking-tight text-gray-950">
               Welcome back
@@ -187,7 +177,7 @@ export default function LoginPage() {
 
           <p className="mt-6 text-center text-sm text-gray-500">
 
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
 
             <Link
               href="/register"

@@ -22,14 +22,14 @@ export interface ProvidersResponse {
 
 export async function getProvidersByService(
   serviceId: number,
-  serviceArea: string = "Kota"
+  serviceArea?: string
 ) {
   const response = await api.get<ProvidersResponse>(
     "/api/service-discovery/providers",
     {
       params: {
         service_id: serviceId,
-        service_area: serviceArea,
+        ...(serviceArea ? { service_area: serviceArea } : {}),
       },
     }
   );

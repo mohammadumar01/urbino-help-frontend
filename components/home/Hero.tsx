@@ -1,79 +1,82 @@
-import { MapPin, Search } from "lucide-react";
+import { BadgeCheck, CreditCard, MapPin, Search, ShieldCheck, Star } from "lucide-react";
+
+const popular = ["AC Repair", "Home Cleaning", "Electrician", "Salon at Home", "Plumber"];
+
+const trust = [
+  { icon: BadgeCheck, label: "Verified professionals" },
+  { icon: CreditCard, label: "Upfront pricing" },
+  { icon: ShieldCheck, label: "Secure payments" },
+  { icon: Star, label: "Rated by customers" },
+];
 
 export default function Hero() {
   return (
-    <section className="relative overflow-hidden bg-white">
-      <div className="mx-auto max-w-7xl px-6 py-20 lg:py-28">
-        <div className="mx-auto max-w-4xl text-center">
+    <section className="relative overflow-hidden bg-gradient-to-b from-blue-50 via-white to-white">
+      <div className="pointer-events-none absolute -top-40 left-1/2 h-96 w-[60rem] -translate-x-1/2 rounded-full bg-blue-100/50 blur-3xl" />
 
-          {/* Eyebrow */}
-          <div className="mb-6 inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
-            Trusted services. Right at your doorstep.
-          </div>
+      <div className="relative mx-auto max-w-7xl px-6 pb-16 pt-14 lg:pb-24 lg:pt-20">
+        <div className="mx-auto max-w-3xl text-center">
+          <span className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white px-4 py-1.5 text-sm font-medium text-blue-700 shadow-sm">
+            <span className="h-2 w-2 rounded-full bg-green-500" />
+            Trusted services at your doorstep
+          </span>
 
-          {/* Heading */}
-          <h1 className="text-5xl font-bold tracking-tight text-gray-900 sm:text-6xl lg:text-7xl">
-            Get things done.
-            <br />
-            <span className="text-blue-600">
-              Without the hassle.
-            </span>
+          <h1 className="mt-6 text-4xl font-bold tracking-tight text-gray-950 sm:text-5xl lg:text-6xl">
+            Home services, <span className="text-blue-600">booked in minutes.</span>
           </h1>
 
-          {/* Description */}
-          <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-gray-600">
-            Discover trusted professionals for home, wellness, repair,
-            beauty, fitness and everyday services — all in one place.
+          <p className="mx-auto mt-5 max-w-xl text-lg leading-8 text-gray-600">
+            Cleaning, repairs, beauty, wellness and more. Compare verified
+            professionals and book at a price you see upfront.
           </p>
 
           {/* Search */}
-          <div className="mx-auto mt-10 flex max-w-3xl flex-col gap-3 rounded-2xl border border-gray-200 bg-white p-3 shadow-xl shadow-gray-200/50 sm:flex-row">
-
-            <div className="flex flex-1 items-center gap-3 rounded-xl bg-gray-50 px-4 py-3">
-              <Search className="h-5 w-5 text-gray-400" />
-
+          <form className="mx-auto mt-9 flex max-w-2xl flex-col gap-2 rounded-2xl border border-gray-200 bg-white p-2 shadow-xl shadow-blue-100/50 sm:flex-row">
+            <label className="flex flex-1 items-center gap-3 rounded-xl px-4 py-3">
+              <Search className="h-5 w-5 shrink-0 text-gray-400" />
               <input
                 type="text"
-                placeholder="What service do you need?"
+                placeholder="Search for AC repair, cleaning, salon..."
                 className="w-full bg-transparent text-sm text-gray-900 outline-none placeholder:text-gray-400"
               />
-            </div>
+            </label>
 
-            <div className="flex items-center gap-3 rounded-xl bg-gray-50 px-4 py-3 sm:w-52">
-              <MapPin className="h-5 w-5 text-gray-400" />
-
-              <span className="text-sm text-gray-500">
-                Your location
-              </span>
+            <div className="hidden items-center gap-2 border-l border-gray-100 px-4 text-sm text-gray-500 sm:flex">
+              <MapPin className="h-4 w-4" />
+              Your location
             </div>
 
             <button
-              type="button"
-              className="rounded-xl bg-gray-900 px-7 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
+              type="submit"
+              className="rounded-xl bg-blue-600 px-7 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
             >
               Search
             </button>
+          </form>
+
+          {/* Popular */}
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-sm">
+            <span className="text-gray-500">Popular:</span>
+            {popular.map((item) => (
+              <button
+                key={item}
+                type="button"
+                className="rounded-full border border-gray-200 bg-white px-3.5 py-1.5 text-gray-700 transition hover:border-blue-300 hover:text-blue-700"
+              >
+                {item}
+              </button>
+            ))}
           </div>
+        </div>
 
-          {/* Popular Searches */}
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-sm">
-            <span className="text-gray-500">
-              Popular:
-            </span>
-
-            {["AC Repair", "Cleaning", "Electrician", "Beauty"].map(
-              (service) => (
-                <button
-                  key={service}
-                  type="button"
-                  className="rounded-full border border-gray-200 px-3 py-1.5 text-gray-600 transition hover:border-gray-400"
-                >
-                  {service}
-                </button>
-              )
-            )}
-          </div>
-
+        {/* Trust strip */}
+        <div className="mx-auto mt-14 grid max-w-4xl grid-cols-2 gap-4 md:grid-cols-4">
+          {trust.map(({ icon: Icon, label }) => (
+            <div key={label} className="flex items-center justify-center gap-2.5 text-sm font-medium text-gray-700">
+              <Icon size={18} className="text-blue-600" />
+              {label}
+            </div>
+          ))}
         </div>
       </div>
     </section>
