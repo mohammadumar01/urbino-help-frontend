@@ -8,6 +8,8 @@ import RequireRole from "@/components/auth/RequireRole";
 import UrbinoLogo from "@/components/brand/UrbinoLogo";
 import { clearSession, useAuth } from "@/lib/auth";
 import NotificationBell from "@/components/layout/NotificationBell";
+import LanguageToggle from "@/components/layout/LanguageToggle";
+import { useT } from "@/lib/i18n";
 
 const TABS = [
   { href: "/provider/dashboard", label: "Bookings", icon: ClipboardList },
@@ -23,6 +25,7 @@ function Shell({ title, subtitle, actions, children }: { title: string; subtitle
   const pathname = usePathname();
   const router = useRouter();
   const user = useAuth();
+  const t = useT();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -32,12 +35,13 @@ function Shell({ title, subtitle, actions, children }: { title: string; subtitle
             <UrbinoLogo className="h-9 w-9" />
             <span className="leading-tight">
               <span className="block text-base font-bold text-gray-950">Urbino Help</span>
-              <span className="block text-xs text-gray-500">Partner workspace</span>
+              <span className="block text-xs text-gray-500">{t("Partner workspace")}</span>
             </span>
           </Link>
           <div className="flex items-center gap-3">
+            <LanguageToggle className="hidden sm:inline-flex" />
             <NotificationBell />
-            <Link href="/account" className="hidden text-sm text-gray-600 hover:text-gray-950 sm:inline" title="Your account">
+            <Link href="/account" className="hidden text-sm text-gray-600 hover:text-gray-950 sm:inline" title={t("Your account")}>
               {user?.name}
             </Link>
             <button
@@ -48,11 +52,11 @@ function Shell({ title, subtitle, actions, children }: { title: string; subtitle
               }}
               className="flex items-center gap-2 rounded-xl border border-gray-200 px-3.5 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
             >
-              <LogOut size={16} /> <span className="hidden sm:inline">Log out</span>
+              <LogOut size={16} /> <span className="hidden sm:inline">{t("Log out")}</span>
             </button>
           </div>
         </div>
-        <nav aria-label="Provider" className="mx-auto max-w-7xl overflow-x-auto px-3 sm:px-6">
+        <nav aria-label={t("Provider")} className="mx-auto max-w-7xl overflow-x-auto px-3 sm:px-6">
           <ul className="flex min-w-max gap-1">
             {TABS.map(({ href, label, icon: Icon }) => {
               const active = pathname === href;
@@ -65,7 +69,7 @@ function Shell({ title, subtitle, actions, children }: { title: string; subtitle
                       active ? "border-orange-500 text-gray-950" : "border-transparent text-gray-500 hover:text-gray-900"
                     }`}
                   >
-                    <Icon size={16} /> {label}
+                    <Icon size={16} /> {t(label)}
                   </Link>
                 </li>
               );
@@ -77,8 +81,8 @@ function Shell({ title, subtitle, actions, children }: { title: string; subtitle
       <main className="mx-auto max-w-7xl px-5 py-8 sm:px-8">
         <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-gray-950 sm:text-3xl">{title}</h1>
-            {subtitle && <p className="mt-1 text-sm text-gray-500">{subtitle}</p>}
+            <h1 className="text-2xl font-bold tracking-tight text-gray-950 sm:text-3xl">{t(title)}</h1>
+            {subtitle && <p className="mt-1 text-sm text-gray-500">{t(subtitle)}</p>}
           </div>
           {actions}
         </div>

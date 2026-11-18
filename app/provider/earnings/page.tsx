@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ArrowDownLeft, ArrowUpRight, Banknote, CreditCard, Info, Loader2 } from "lucide-react";
 import ProviderShell, { Card, Notice } from "@/components/provider/ProviderShell";
 import api, { apiError } from "@/lib/api";
+import { useT } from "@/lib/i18n";
 
 type Summary = {
   paid_jobs: number;
@@ -49,6 +50,7 @@ export default function ProviderEarningsPage() {
 }
 
 function Earnings() {
+  const t = useT();
   const [data, setData] = useState<Resp | null>(null);
   const [error, setError] = useState("");
 
@@ -73,22 +75,22 @@ function Earnings() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label="Today" value={inr(s.net_today)} />
-        <Stat label="Last 7 days" value={inr(s.net_7d)} />
-        <Stat label="Last 30 days" value={inr(s.net_30d)} />
-        <Stat label="All time" value={inr(s.net)} caption={`${s.paid_jobs} paid job${s.paid_jobs === 1 ? "" : "s"}`} />
+        <Stat label={t("Today")} value={inr(s.net_today)} />
+        <Stat label={t("Last 7 days")} value={inr(s.net_7d)} />
+        <Stat label={t("Last 30 days")} value={inr(s.net_30d)} />
+        <Stat label={t("All time")} value={inr(s.net)} caption={t("{n} paid jobs", { n: s.paid_jobs })} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         <Card className="p-0">
           <div className="border-b border-gray-100 px-6 py-4">
-            <h2 className="text-lg font-bold text-gray-950">Paid jobs</h2>
+            <h2 className="text-lg font-bold text-gray-950">{t("Paid jobs")}</h2>
             <p className="text-sm text-gray-500">
-              Customers paid {inr(s.gross)} · Urbino commission {inr(s.commission)} · You earned <b className="text-gray-900">{inr(s.net)}</b>
+              {t("Customers paid")} {inr(s.gross)} · {t("Urbino commission")} {inr(s.commission)} · {t("You earned")} <b className="text-gray-900">{inr(s.net)}</b>
             </p>
           </div>
           {data.payments.length === 0 ? (
-            <p className="px-6 py-10 text-center text-sm text-gray-500">No paid jobs yet. Earnings show up here once customers pay.</p>
+            <p className="px-6 py-10 text-center text-sm text-gray-500">{t("No paid jobs yet. Earnings show up here once customers pay.")}</p>
           ) : (
             <ul className="divide-y divide-gray-100">
               {data.payments.map((p) => {
@@ -104,16 +106,16 @@ function Earnings() {
                           {p.service_name} <span className="font-normal text-gray-400">#{p.booking_id}</span>
                         </p>
                         <p className="truncate text-xs text-gray-500">
-                          {day(p.paid_at)} · {cash ? "Cash" : "Online"}
+                          {day(p.paid_at)} · {t(cash ? "Cash" : "Online")}
                           {p.customer_name ? ` · ${p.customer_name}` : ""}
-                          {p.agent_name ? ` · by ${p.agent_name}` : ""}
+                          {p.agent_name ? ` · ${t("by")} ${p.agent_name}` : ""}
                         </p>
                       </div>
                     </div>
                     <div className="shrink-0 text-right tabular-nums">
                       <p className="font-bold text-gray-950">{inr(p.provider_earning)}</p>
                       <p className="text-xs text-gray-500">
-                        of {inr(p.amount)} · fee {inr(p.platform_fee)}
+                        {t("of")} {inr(p.amount)} · {t("fee")} {inr(p.platform_fee)}
                       </p>
                     </div>
                   </li>
@@ -125,39 +127,39 @@ function Earnings() {
 
         <div className="space-y-6">
           <Card>
-            <p className="text-sm font-semibold text-gray-500">Settlement balance</p>
+            <p className="text-sm font-semibold text-gray-500">{t("Settlement balance")}</p>
             {bal === 0 ? (
               <>
-                <p className="mt-1 text-3xl font-bold text-gray-950">All settled</p>
-                <p className="mt-1 text-sm text-gray-500">Nothing due either way.</p>
+                <p className="mt-1 text-3xl font-bold text-gray-950">{t("All settled")}</p>
+                <p className="mt-1 text-sm text-gray-500">{t("Nothing due either way.")}</p>
               </>
             ) : bal > 0 ? (
               <>
                 <p className="mt-1 text-3xl font-bold text-emerald-700">{inr(bal)}</p>
-                <p className="mt-1 text-sm text-gray-600">Urbino will pay this to your bank account in the next weekly payout.</p>
+                <p className="mt-1 text-sm text-gray-600">{t("Urbino will pay this to your bank account in the next weekly payout.")}</p>
               </>
             ) : (
               <>
                 <p className="mt-1 text-3xl font-bold text-amber-700">{inr(-bal)}</p>
-                <p className="mt-1 text-sm text-gray-600">Commission due on cash jobs. Pay Urbino by UPI; it is recorded within a day.</p>
+                <p className="mt-1 text-sm text-gray-600">{t("Commission due on cash jobs. Pay Urbino by UPI; it is recorded within a day.")}</p>
               </>
             )}
             <dl className="mt-4 space-y-1.5 border-t border-gray-100 pt-4 text-sm">
-              <Line label="Earned on online jobs" value={inr(data.balance?.online_earning)} />
-              <Line label="Commission on cash jobs" value={`− ${inr(data.balance?.cash_fee)}`} />
-              <Line label="Already paid to you" value={`− ${inr(data.balance?.paid_out)}`} />
-              <Line label="Already paid by you" value={`+ ${inr(data.balance?.received)}`} />
+              <Line label={t("Earned on online jobs")} value={inr(data.balance?.online_earning)} />
+              <Line label={t("Commission on cash jobs")} value={`− ${inr(data.balance?.cash_fee)}`} />
+              <Line label={t("Already paid to you")} value={`− ${inr(data.balance?.paid_out)}`} />
+              <Line label={t("Already paid by you")} value={`+ ${inr(data.balance?.received)}`} />
             </dl>
             <p className="mt-4 flex gap-2 rounded-xl bg-gray-50 p-3 text-xs text-gray-600">
               <Info size={14} className="mt-0.5 shrink-0" />
-              Online payments reach Urbino first, so we send you your share. With cash, you already hold the money, so only Urbino&apos;s commission is due.
+              {t("Online payments reach Urbino first, so we send you your share. With cash, you already hold the money, so only Urbino\'s commission is due.")}
             </p>
           </Card>
 
           <Card className="p-0">
-            <h2 className="border-b border-gray-100 px-6 py-4 text-lg font-bold text-gray-950">Settlements</h2>
+            <h2 className="border-b border-gray-100 px-6 py-4 text-lg font-bold text-gray-950">{t("Settlements")}</h2>
             {data.payouts.length === 0 ? (
-              <p className="px-6 py-6 text-sm text-gray-500">No settlements yet.</p>
+              <p className="px-6 py-6 text-sm text-gray-500">{t("No settlements yet.")}</p>
             ) : (
               <ul className="divide-y divide-gray-100">
                 {data.payouts.map((p) => (
@@ -169,7 +171,7 @@ function Earnings() {
                         <ArrowUpRight size={17} className="text-amber-600" aria-hidden />
                       )}
                       <div>
-                        <p className="text-sm font-semibold text-gray-900">{p.direction === "to_provider" ? "Received from Urbino" : "Paid to Urbino"}</p>
+                        <p className="text-sm font-semibold text-gray-900">{t(p.direction === "to_provider" ? "Received from Urbino" : "Paid to Urbino")}</p>
                         <p className="text-xs text-gray-500">
                           {day(p.created_at)}
                           {p.reference ? ` · Ref ${p.reference}` : ""}

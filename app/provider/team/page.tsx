@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useState } from "react";
 import { BadgeCheck, Clock3, Loader2, Phone, Send, UserPlus, X } from "lucide-react";
 import ProviderShell, { btnPrimary, Card, inputCls, Notice } from "@/components/provider/ProviderShell";
 import api, { apiError } from "@/lib/api";
+import { useT } from "@/lib/i18n";
 
 type Member = {
   agent_id: number;
@@ -27,6 +28,7 @@ export default function ProviderTeamPage() {
 }
 
 function Team() {
+  const t = useT();
   const [members, setMembers] = useState<Member[]>([]);
   const [invites, setInvites] = useState<Invite[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,14 +87,14 @@ function Team() {
 
         <Card className="p-0">
           <div className="border-b border-gray-100 px-6 py-4">
-            <h2 className="text-lg font-bold text-gray-950">Team members ({members.length})</h2>
+            <h2 className="text-lg font-bold text-gray-950">{t("Team members")} ({members.length})</h2>
           </div>
           {loading ? (
             <p className="flex items-center gap-2 px-6 py-8 text-sm text-gray-500">
-              <Loader2 size={15} className="animate-spin" /> Loading…
+              <Loader2 size={15} className="animate-spin" /> {t("Loading…")}
             </p>
           ) : members.length === 0 ? (
-            <p className="px-6 py-10 text-center text-sm text-gray-500">No one in your team yet. Invite your first professional.</p>
+            <p className="px-6 py-10 text-center text-sm text-gray-500">{t("No one in your team yet. Invite your first professional.")}</p>
           ) : (
             <ul className="divide-y divide-gray-100">
               {members.map((m) => (
@@ -105,18 +107,18 @@ function Team() {
                         {m.verification_status === "approved" && <BadgeCheck size={16} className="text-blue-600" aria-label="Documents verified" />}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {m.verification_status === "approved" ? "Documents verified" : m.verification_status === "pending" ? "Documents under review" : "Documents not uploaded"}
+                        {t(m.verification_status === "approved" ? "Documents verified" : m.verification_status === "pending" ? "Documents under review" : "Documents not uploaded")}
                         {m.experience_years != null ? ` · ${m.experience_years} yrs` : ""}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4 text-sm">
                     <span className="text-gray-600">
-                      <b className="text-gray-950">{m.active_jobs}</b> active · <b className="text-gray-950">{m.completed_jobs}</b> done
+                      <b className="text-gray-950">{m.active_jobs}</b> {t("active")} · <b className="text-gray-950">{m.completed_jobs}</b> {t("done")}
                     </span>
                     {m.agent_phone && (
                       <a href={`tel:${m.agent_phone}`} className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-semibold text-gray-700">
-                        <Phone size={13} /> Call
+                        <Phone size={13} /> {t("Call")}
                       </a>
                     )}
                   </div>
@@ -129,7 +131,7 @@ function Team() {
         {invites.length > 0 && (
           <Card className="p-0">
             <div className="border-b border-gray-100 px-6 py-4">
-              <h2 className="text-lg font-bold text-gray-950">Waiting to accept ({invites.length})</h2>
+              <h2 className="text-lg font-bold text-gray-950">{t("Waiting to accept")} ({invites.length})</h2>
             </div>
             <ul className="divide-y divide-gray-100">
               {invites.map((i) => (
@@ -137,11 +139,11 @@ function Team() {
                   <div>
                     <p className="font-medium text-gray-900">{i.agent_name}</p>
                     <p className="flex items-center gap-1 text-xs text-gray-500">
-                      <Clock3 size={12} /> Invite sent · {i.agent_email}
+                      <Clock3 size={12} /> {t("Invite sent")} · {i.agent_email}
                     </p>
                   </div>
                   <button type="button" onClick={() => void cancel(i.id)} className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-gray-500 hover:bg-gray-100">
-                    <X size={13} /> Cancel
+                    <X size={13} /> {t("Cancel")}
                   </button>
                 </li>
               ))}
@@ -152,18 +154,18 @@ function Team() {
 
       <Card className="h-fit">
         <h2 className="flex items-center gap-2 text-lg font-bold text-gray-950">
-          <UserPlus size={19} /> Invite a professional
+          <UserPlus size={19} /> {t("Invite a professional")}
         </h2>
         <p className="mt-1 text-sm text-gray-500">
-          They need an Urbino professional account. Ask them to sign up with &quot;I work as a pro&quot;, then invite them here.
+          {t("They need an Urbino professional account. Ask them to sign up with \"I work as a pro\", then invite them here.")}
         </p>
         <form onSubmit={invite} className="mt-4 space-y-3">
           <label htmlFor="contact" className="block text-sm font-semibold text-gray-800">
-            Email or phone
+            {t("Email or phone")}
           </label>
           <input id="contact" value={contact} onChange={(e) => setContact(e.target.value)} placeholder="ravi@example.com or 98765 43210" className={inputCls} />
           <button type="submit" disabled={busy || !contact.trim()} className={btnPrimary + " w-full"}>
-            {busy ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} Send invite
+            {busy ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} {t("Send invite")}
           </button>
         </form>
       </Card>

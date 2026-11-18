@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { BadgeCheck, CheckCircle2, Circle, Clock3, XCircle } from "lucide-react";
 import { providerApi, type Onboarding } from "@/lib/providerApi";
+import { useT } from "@/lib/i18n";
 
 const LINKS: Record<string, string> = {
   profile: "/provider/profile",
@@ -14,6 +15,7 @@ const LINKS: Record<string, string> = {
 
 /** Setup adhoora ho to checklist; sab done ho to chhota "verified/live" status. */
 export default function OnboardingBanner() {
+  const t = useT();
   const [data, setData] = useState<Onboarding | null>(null);
 
   useEffect(() => {
@@ -30,11 +32,11 @@ export default function OnboardingBanner() {
       <p className="flex flex-1 items-center gap-2 text-sm text-gray-600">
         {data.verified ? (
           <>
-            <BadgeCheck size={18} className="text-blue-600" /> Verified and visible to customers.
+            <BadgeCheck size={18} className="text-blue-600" /> {t("Verified and visible to customers.")}
           </>
         ) : (
           <>
-            <Clock3 size={18} className="text-amber-600" /> Live for bookings. Verification is under review.
+            <Clock3 size={18} className="text-amber-600" /> {t("Live for bookings. Verification is under review.")}
           </>
         )}
       </p>
@@ -47,15 +49,17 @@ export default function OnboardingBanner() {
     <section className="flex-1 rounded-2xl border border-orange-200 bg-orange-50/60 p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 className="font-bold text-gray-950">Finish setting up your account</h2>
+          <h2 className="font-bold text-gray-950">{t("Finish setting up your account")}</h2>
           <p className="text-sm text-gray-600">
-            {data.visible_to_customers
-              ? "Customers can already find you. Complete the rest to get verified."
-              : "Customers can't find you until your profile and services are added."}
+            {t(
+              data.visible_to_customers
+                ? "Customers can already find you. Complete the rest to get verified."
+                : "Customers can't find you until your profile and services are added."
+            )}
           </p>
         </div>
         <span className="text-sm font-semibold text-orange-700">
-          {data.completed}/{data.total} done
+          {data.completed}/{data.total} {t("done")}
         </span>
       </div>
       <div className="mt-3 h-2 overflow-hidden rounded-full bg-orange-100" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
@@ -73,7 +77,7 @@ export default function OnboardingBanner() {
                 className="flex items-center gap-2 rounded-xl bg-white px-3 py-2.5 text-sm font-medium text-gray-800 shadow-sm ring-1 ring-gray-100 hover:ring-orange-300"
               >
                 <Icon size={17} className={rejected ? "text-rose-600" : s.done ? "text-emerald-600" : "text-gray-300"} />
-                <span className={s.done && !rejected ? "text-gray-500 line-through" : ""}>{s.label}</span>
+                <span className={s.done && !rejected ? "text-gray-500 line-through" : ""}>{t(s.label)}</span>
                 {pending && <span className="ml-auto text-xs text-amber-700">In review</span>}
                 {rejected && <span className="ml-auto text-xs text-rose-700">Re-upload</span>}
               </Link>
