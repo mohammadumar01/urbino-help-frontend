@@ -10,6 +10,8 @@ export interface SessionUser {
   email: string;
   phone?: string;
   role: Role;
+  /** Admin ne temporary password diya ho */
+  must_change_password?: boolean;
 }
 
 const TOKEN_KEY = "token";

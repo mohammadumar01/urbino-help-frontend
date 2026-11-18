@@ -1033,7 +1033,7 @@ export default function AdminDashboardPage() {
                     <div className="absolute right-0 z-20 mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-200 bg-white shadow-lg">
                       <p className="border-b border-slate-100 px-4 py-3 text-sm font-semibold text-slate-900">Notifications</p>
                       {alerts.length === 0 ? (
-                        <p className="px-4 py-6 text-center text-sm text-slate-500">You're all caught up.</p>
+                        <p className="px-4 py-6 text-center text-sm text-slate-500">You&apos;re all caught up.</p>
                       ) : (
                         <ul className="divide-y divide-slate-100">
                           {alerts.map((a) => (
@@ -1083,13 +1083,13 @@ export default function AdminDashboardPage() {
               <h1 className="text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
                 {now ? `${greetingFor(now)}, Admin` : "Dashboard"}
               </h1>
-              <p className="mt-1.5 text-sm text-slate-500">{dateLabel ? `${dateLabel}. ` : ""}Here's how the platform is doing.</p>
+              <p className="mt-1.5 text-sm text-slate-500">{dateLabel ? `${dateLabel}. ` : ""}Here&apos;s how the platform is doing.</p>
             </div>
 
             <label className="flex w-fit cursor-pointer items-center gap-3 rounded-lg border border-slate-200 bg-white px-3.5 py-2.5">
               <span className="text-sm">
                 <span className="block font-medium text-slate-800">Preview sample data</span>
-                <span className="block text-xs text-slate-500">Fills sections the API doesn't send yet</span>
+                <span className="block text-xs text-slate-500">Fills sections the API doesn&apos;t send yet</span>
               </span>
               <button
                 type="button"
@@ -1109,7 +1109,7 @@ export default function AdminDashboardPage() {
               <div className="flex items-start gap-4">
                 <span className="rounded-lg bg-rose-50 p-2.5 text-rose-600"><Icon name="alert" size={20} /></span>
                 <div>
-                  <h2 className="font-semibold text-slate-900">Couldn't load the dashboard</h2>
+                  <h2 className="font-semibold text-slate-900">Couldn&apos;t load the dashboard</h2>
                   <p className="mt-1 text-sm text-slate-500">{error}</p>
                   <button onClick={() => void load()} className="mt-4 rounded-lg bg-[#E8692A] px-4 py-2 text-sm font-semibold text-white hover:bg-[#D45A1F] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E8692A] focus-visible:ring-offset-2">
                     Try again
@@ -1140,7 +1140,7 @@ export default function AdminDashboardPage() {
               {error && (
                 <div role="alert" className="flex items-center gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
                   <Icon name="alert" size={18} />
-                  Couldn't refresh just now. Showing the last loaded data.
+                  Couldn&apos;t refresh just now. Showing the last loaded data.
                 </div>
               )}
 

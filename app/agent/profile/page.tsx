@@ -5,6 +5,10 @@ import AgentShell from "@/components/agent/AgentShell";
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
 
+/** API error ka shape (axios) */
+type ApiErr = { response?: { status?: number; data?: { message?: string } } };
+
+
 type ProfileForm = {
   name: string;
   phone: string;
@@ -126,7 +130,8 @@ function AgentProfileContent() {
             profile.verification_status ?? "pending"
           );
         }
-      } catch (err: any) {
+      } catch (caught) {
+      const err = caught as ApiErr;
         setError(
           err.response?.data?.message ??
             "Unable to load your profile. Please check your login."
@@ -269,7 +274,8 @@ function AgentProfileContent() {
       setMessage(
         response.data.message ?? "Profile saved successfully!"
       );
-    } catch (err: any) {
+    } catch (caught) {
+      const err = caught as ApiErr;
       setError(
         err.response?.data?.message ??
           "Unable to save your profile. Please try again."
@@ -464,7 +470,7 @@ function AgentProfileContent() {
                           onClick={() => addSkill(skillSearch)}
                           className="block w-full px-4 py-3 text-left font-medium text-blue-600 hover:bg-blue-50"
                         >
-                          + Add "{skillSearch.trim()}"
+                          + Add &ldquo;{skillSearch.trim()}&rdquo;
                         </button>
                       )}
                   </div>
@@ -546,7 +552,7 @@ function AgentProfileContent() {
                           onClick={() => addCity(citySearch)}
                           className="block w-full px-4 py-3 text-left font-medium text-blue-600 hover:bg-blue-50"
                         >
-                          + Add "{citySearch.trim()}"
+                          + Add &ldquo;{citySearch.trim()}&rdquo;
                         </button>
                       )}
                   </div>

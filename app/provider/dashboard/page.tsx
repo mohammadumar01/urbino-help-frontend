@@ -21,6 +21,10 @@ import JobTimeline from "@/components/booking/JobTimeline";
 import LiveTracking from "@/components/maps/LiveTracking";
 import type { PaymentStatus } from "@/lib/paymentsApi";
 
+/** API error ka shape (axios) */
+type ApiErr = { response?: { status?: number; data?: { message?: string } } };
+
+
 interface Booking {
   id: number;
   customer_id: number;
@@ -119,7 +123,8 @@ function ProviderDashboardContent() {
       setTotalBookings(
         response.data.totalPendingBookings || 0
       );
-    } catch (err: any) {
+    } catch (caught) {
+      const err = caught as ApiErr;
       console.error("Pending bookings error:", err);
 
       if (err?.response?.status === 401) {
@@ -150,7 +155,8 @@ async function fetchMyBookings() {
     const response = await api.get("/api/provider/my-bookings");
 
     setMyBookings(response.data.bookings || []);
-  } catch (error: any) {
+  } catch (caught) {
+      const error = caught as ApiErr;
     console.error("Failed to fetch provider bookings:", error);
 
     setMyBookingsError(
@@ -172,7 +178,8 @@ async function fetchAgents() {
     const response = await api.get("/api/provider/agents");
 
     setAgents(response.data.agents || []);
-  } catch (error: any) {
+  } catch (caught) {
+      const error = caught as ApiErr;
     console.error("Failed to fetch provider agents:", error);
 
     setAgentsError(
@@ -221,7 +228,8 @@ async function fetchAgents() {
       await fetchPendingBookings();
       await fetchMyBookings();
 
-    } catch (err: any) {
+    } catch (caught) {
+      const err = caught as ApiErr;
       console.error("Accept booking error:", err);
 
       setError(
@@ -269,7 +277,8 @@ async function fetchAgents() {
         fetchMyBookings(),
         fetchAgents(),
       ]);
-    } catch (error: any) {
+    } catch (caught) {
+      const error = caught as ApiErr;
       console.error("Assign agent error:", error);
 
       setError(

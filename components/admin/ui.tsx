@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode, type RefObject } from "react";
+import { useEffect, useLayoutEffect, useRef, type ReactNode, type RefObject } from "react";
 import { initialsOf, labelize, toneFor } from "@/lib/admin/format";
 import type { ToastState } from "@/lib/admin/hooks";
 
@@ -506,8 +506,10 @@ export function Overlay({
   const ref = useRef<HTMLElement>(null);
   const lockedRef = useRef(locked);
   const closeRef = useRef(onClose);
-  lockedRef.current = locked;
-  closeRef.current = onClose;
+  useLayoutEffect(() => {
+    lockedRef.current = locked;
+    closeRef.current = onClose;
+  });
 
   useEffect(() => {
     const panel = ref.current!;

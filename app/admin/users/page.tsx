@@ -7,6 +7,7 @@ import {
   SkeletonRows, SortHeader, Stats, Toast, nextSort, btnSecondary, type Density,
 } from "@/components/admin/ui";
 import { downloadCsv, labelize } from "@/lib/admin/format";
+import { api } from "@/lib/admin/api";
 import {
   useApiQuery, useDebouncedUrlSearch, useHotkeys, usePersisted, useToast, useUrlState,
 } from "@/lib/admin/hooks";
@@ -39,7 +40,7 @@ function UsersView() {
 
   const page = Math.max(1, Number(url.page) || 1);
   const qs = new URLSearchParams({ page: String(page), limit: String(pageSize), search: url.q });
-  const { data, loading, refreshing, error, updated, reload, retry } = useApiQuery<any>(`/api/admin/users?${qs}`);
+  const { data, loading, refreshing, error, updated, reload, retry } = useApiQuery(`/api/admin/users?${qs}`);
 
   const users: User[] = Array.isArray(data?.users) ? data.users : [];
   const totalPages = Math.max(1, Number(data?.totalPages) || 1);
@@ -292,6 +293,7 @@ function UsersView() {
 
           <footer className="flex items-center justify-end gap-3 border-t border-slate-200 bg-slate-50 px-6 py-4">
             <button type="button" onClick={closeDrawer} className={btnSecondary}>Close</button>
+            {drawerUser.id != null && <ResetPassword userId={Number(drawerUser.id)} name={drawerUser.name || "this user"} onError={(m) => notify("error", m)} />}
             {drawerUser.email && <a href={`mailto:${drawerUser.email}`} className={btnPrimary}>Email user</a>}
           </footer>
         </Overlay>
@@ -299,5 +301,37 @@ function UsersView() {
 
       <Toast toast={toast} onDismiss={dismiss} />
     </div>
+  );
+}
+/** Phone par verify karne ke baad ek baar dikhne wala temporary password. */
+function ResetPassword({ userId, name, onError }: { userId: number; name: string; onError: (m: string) => void }) {
+  const [temp, setTemp] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function reset() {
+    if (!window.confirm(`Create a temporary password for ${name}? Their current password will stop working. Verify them on a call first.`)) return;
+    setBusy(true);
+    try {
+      const r = await api<{ temporary_password: string }>(`/api/admin/users/${userId}/reset-password`, { method: "POST" });
+      setTemp(r.temporary_password);
+    } catch (e) {
+      onError(e instanceof Error ? e.message : "Could not reset the password.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (temp) {
+    return (
+      <p className="mr-auto rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
+        Temporary password: <b className="font-mono tracking-wider">{temp}</b>
+        <span className="block text-xs text-amber-700">Tell it on the call. Shown only once; they must set a new one after login.</span>
+      </p>
+    );
+  }
+  return (
+    <button type="button" disabled={busy} onClick={() => void reset()} className={`${btnSecondary} mr-auto`}>
+      {busy ? "Resetting…" : "Reset password"}
+    </button>
   );
 }

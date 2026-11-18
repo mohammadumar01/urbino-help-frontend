@@ -97,7 +97,9 @@ export function usePersisted<T extends string | number>(key: string, initial: T,
 
 export function useHotkeys(map: Record<string, () => void>, enabled = true) {
   const ref = useRef(map);
-  ref.current = map;
+  useEffect(() => {
+    ref.current = map;
+  });
   useEffect(() => {
     if (!enabled) return;
     const onKey = (e: KeyboardEvent) => {
@@ -116,6 +118,7 @@ export function useHotkeys(map: Record<string, () => void>, enabled = true) {
 }
 
 /** GET data + race-safe loading. Pehli baar skeleton, baad mein sirf dim + progress bar. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- purane admin pages bina type ke use karte hain
 export function useApiQuery<T = any>(path: string | null, intervalMs?: number) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);

@@ -37,7 +37,9 @@ function Shell({ title, subtitle, actions, children }: { title: string; subtitle
           </Link>
           <div className="flex items-center gap-3">
             <NotificationBell />
-            <span className="hidden text-sm text-gray-600 sm:inline">{user?.name}</span>
+            <Link href="/account" className="hidden text-sm text-gray-600 hover:text-gray-950 sm:inline" title="Your account">
+              {user?.name}
+            </Link>
             <button
               type="button"
               onClick={() => {

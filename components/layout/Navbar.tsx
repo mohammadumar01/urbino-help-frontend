@@ -82,9 +82,14 @@ export default function Navbar() {
               >
                 <dashboard.icon size={17} /> {t(dashboard.label)}
               </Link>
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white" title={user.name}>
+              <Link
+                href="/account"
+                aria-label={t("Your account")}
+                title={user.name}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white hover:bg-blue-700"
+              >
                 {user.name?.[0]?.toUpperCase() || "U"}
-              </span>
+              </Link>
               <button
                 type="button"
                 onClick={logout}
@@ -129,6 +134,11 @@ export default function Navbar() {
                 className="rounded-lg px-3 py-2.5 text-sm font-semibold text-gray-900 hover:bg-gray-50"
               >
                 {t(dashboard.label)}
+              </Link>
+            )}
+            {user && (
+              <Link href="/account" onClick={() => setOpen(false)} className="rounded-lg px-3 py-2.5 text-sm font-semibold text-gray-900 hover:bg-gray-50">
+                {t("Your account")}
               </Link>
             )}
           </nav>

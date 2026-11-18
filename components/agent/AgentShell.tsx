@@ -50,7 +50,9 @@ function Shell({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-2">
             <LanguageToggle />
             <NotificationBell />
-            <span className="hidden max-w-[140px] truncate text-sm text-gray-600 md:inline">{user?.name}</span>
+            <Link href="/account" className="hidden max-w-[140px] truncate text-sm text-gray-600 hover:text-gray-950 md:inline" title={t("Your account")}>
+              {user?.name}
+            </Link>
             <button
               type="button"
               aria-label={t("Log out")}

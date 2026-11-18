@@ -68,7 +68,11 @@ export default function ReworkRequests({ onScheduled }: { onScheduled?: () => vo
 }
 
 function ClaimCard({ claim: c, onDone }: { claim: Claim; onDone: (text: string, tone: "ok" | "err") => void }) {
-  const tomorrow = new Date(Date.now() + 29.5 * 3600 * 1000).toISOString().slice(0, 10);
+  // Date.now render mein nahi: ek baar state banate waqt
+  const [{ tomorrow, today }] = useState(() => ({
+    tomorrow: new Date(Date.now() + 29.5 * 3600 * 1000).toISOString().slice(0, 10),
+    today: new Date(Date.now() + 5.5 * 3600 * 1000).toISOString().slice(0, 10),
+  }));
   const [mode, setMode] = useState<"view" | "accept" | "reject">("view");
   const [date, setDate] = useState(c.preferred_date?.slice(0, 10) || tomorrow);
   const [time, setTime] = useState(c.preferred_time || "10:00");
@@ -124,7 +128,7 @@ function ClaimCard({ claim: c, onDone }: { claim: Claim; onDone: (text: string, 
         <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
           <label className="text-xs font-semibold text-gray-600">
             Date
-            <input type="date" value={date} min={new Date(Date.now() + 5.5 * 3600 * 1000).toISOString().slice(0, 10)} onChange={(e) => setDate(e.target.value)} className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900" />
+            <input type="date" value={date} min={today} onChange={(e) => setDate(e.target.value)} className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900" />
           </label>
           <label className="text-xs font-semibold text-gray-600">
             Time

@@ -115,7 +115,7 @@ export default function WhyUrbino() {
 
           <div>
             <p className="text-lg font-semibold">
-              Built for India's evolving service economy.
+              Built for India&apos;s evolving service economy.
             </p>
 
             <p className="mt-1 text-sm text-gray-500">

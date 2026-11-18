@@ -48,6 +48,19 @@ function LoginForm() {
 
       saveSession(token, user);
 
+      // Admin ne temporary password diya tha: pehle naya password set karwao
+      if (user.must_change_password) {
+        if (user.role === "admin") {
+          try {
+            sessionStorage.setItem("adminToken", token);
+          } catch {
+            /* ignore */
+          }
+        }
+        router.push("/account?setPassword=1");
+        return;
+      }
+
       // Admin bhi isi page se login kar sake: admin panel ka session bhi set karo
       if (user.role === "admin") {
         try {
@@ -145,12 +158,19 @@ function LoginForm() {
             {/* Password */}
             <div className="mt-5">
 
-              <label className="mb-2 block text-sm font-semibold text-gray-800">
-                Password
-              </label>
+              <div className="mb-2 flex items-center justify-between">
+                <label htmlFor="login-password" className="block text-sm font-semibold text-gray-800">
+                  Password
+                </label>
+                <Link href="/forgot-password" className="text-xs font-semibold text-blue-600 hover:text-blue-800">
+                  Forgot password?
+                </Link>
+              </div>
 
               <input
+                id="login-password"
                 type="password"
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"

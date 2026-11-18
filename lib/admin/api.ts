@@ -22,6 +22,7 @@ export function signOut() {
   window.location.assign(LOGIN_PATH);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- purane admin pages bina type ke use karte hain
 export async function api<T = any>(path: string, options: RequestInit = {}): Promise<T> {
   const token = sessionStorage.getItem("adminToken");
   if (!token) {
