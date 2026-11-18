@@ -7,6 +7,7 @@ import { LayoutDashboard, LogOut, Menu, X, CalendarCheck } from "lucide-react";
 import { clearSession, ROLE_HOME, useAuth } from "@/lib/auth";
 import { useT } from "@/lib/i18n";
 import LanguageToggle from "./LanguageToggle";
+import NotificationBell from "./NotificationBell";
 
 const links = [
   { href: "/services", label: "Services" },
@@ -39,8 +40,8 @@ export default function Navbar() {
         <Link href="/" className="flex items-center gap-2.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/urbino-logo.png" alt="Urbino logo" className="h-10 w-10 object-contain" />
-          <span className="text-2xl font-bold tracking-tight text-gray-900">
-            Urbino<span className="text-blue-600">.</span>
+          <span className="text-xl font-bold tracking-tight text-gray-900 sm:text-2xl">
+            Urbino<span className="text-orange-500"> Help</span>
           </span>
         </Link>
 
@@ -52,8 +53,9 @@ export default function Navbar() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-3">
-          <LanguageToggle />
+        <div className="flex items-center gap-2 sm:gap-3">
+          <LanguageToggle className="hidden sm:inline-flex" />
+          <NotificationBell />
           {/* user === undefined: abhi pata nahi, kuch mat dikhao (flash na ho) */}
           {user === null && (
             <>
@@ -108,6 +110,7 @@ export default function Navbar() {
 
       {open && (
         <div className="border-t border-gray-100 bg-white px-6 py-4 md:hidden">
+          <LanguageToggle className="mb-3 sm:hidden" />
           <nav className="flex flex-col gap-1">
             {links.map((l) => (
               <Link

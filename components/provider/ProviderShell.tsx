@@ -7,6 +7,7 @@ import { CalendarClock, ClipboardList, FileCheck2, LogOut, UserRound, Users, Wal
 import RequireRole from "@/components/auth/RequireRole";
 import UrbinoLogo from "@/components/brand/UrbinoLogo";
 import { clearSession, useAuth } from "@/lib/auth";
+import NotificationBell from "@/components/layout/NotificationBell";
 
 const TABS = [
   { href: "/provider/dashboard", label: "Bookings", icon: ClipboardList },
@@ -35,6 +36,7 @@ function Shell({ title, subtitle, actions, children }: { title: string; subtitle
             </span>
           </Link>
           <div className="flex items-center gap-3">
+            <NotificationBell />
             <span className="hidden text-sm text-gray-600 sm:inline">{user?.name}</span>
             <button
               type="button"

@@ -5,6 +5,8 @@ import { BadgeCheck, Loader2 } from "lucide-react";
 import ProviderShell, { btnPrimary, Card, inputCls, Notice } from "@/components/provider/ProviderShell";
 import { apiError } from "@/lib/api";
 import { providerApi, type ProviderProfile } from "@/lib/providerApi";
+import AddressPicker from "@/components/maps/AddressPicker";
+import type { LatLng } from "@/lib/geoApi";
 
 type Form = {
   bio: string;
@@ -44,6 +46,8 @@ function ProfileForm() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState("");
+  const [base, setBase] = useState<LatLng | null>(null);
+  const [radius, setRadius] = useState(15);
 
   useEffect(() => {
     providerApi
@@ -51,6 +55,8 @@ function ProfileForm() {
       .then((p) => {
         setProfile(p);
         setForm(toForm(p));
+        if (p?.latitude != null && p?.longitude != null) setBase({ lat: Number(p.latitude), lng: Number(p.longitude) });
+        if (p?.service_radius_km) setRadius(p.service_radius_km);
       })
       .catch((e) => setError(apiError(e, "Could not load your profile.")))
       .finally(() => setLoading(false));
@@ -74,6 +80,8 @@ function ProfileForm() {
         experience_years: form.experience_years === "" ? 0 : Number(form.experience_years),
         hourly_rate: form.hourly_rate === "" ? null : Number(form.hourly_rate),
         profile_image: form.profile_image || null,
+        ...(base ? { latitude: base.lat, longitude: base.lng } : {}),
+        service_radius_km: radius,
       });
       setProfile(p);
       setForm(toForm(p));
@@ -105,6 +113,23 @@ function ProfileForm() {
             </label>
             <input id="service_area" value={form.service_area} onChange={set("service_area")} placeholder="Kota, Jaipur, Ajmer" className={inputCls} required />
             <p className="mt-1 text-xs text-gray-500">Separate cities or localities with commas. Customers searching these areas will find you.</p>
+          </div>
+
+          <div className="sm:col-span-2">
+            <p className="mb-1.5 text-sm font-semibold text-gray-800">Your base location</p>
+            <p className="mb-3 text-xs text-gray-500">Pin your shop or home. Customers nearby see you first, with the distance.</p>
+            <AddressPicker
+              value={base}
+              mapClassName="h-56"
+              onChange={({ point }) => {
+                setSaved("");
+                setBase(point);
+              }}
+            />
+            <label htmlFor="radius" className="mt-4 flex items-center justify-between text-sm font-semibold text-gray-800">
+              How far will you travel? <span className="tabular-nums text-gray-950">{radius} km</span>
+            </label>
+            <input id="radius" type="range" min={1} max={50} value={radius} onChange={(e) => { setSaved(""); setRadius(Number(e.target.value)); }} className="mt-2 w-full accent-gray-950" />
           </div>
 
           <div>

@@ -18,6 +18,7 @@ import api from "../../lib/api";
 import RequireRole from "../../components/auth/RequireRole";
 import JobTimeline from "../../components/booking/JobTimeline";
 import GuaranteeBox from "../../components/booking/GuaranteeBox";
+import LiveTracking from "../../components/maps/LiveTracking";
 import PaymentActions, { PaymentBadge } from "../../components/payments/PaymentActions";
 import type { PaymentStatus } from "../../lib/paymentsApi";
 
@@ -479,6 +480,11 @@ return (
                     <p className="font-mono text-3xl font-bold tracking-[0.3em] text-orange-600" aria-label={`Start code ${booking.start_otp.split("").join(" ")}`}>
                       {booking.start_otp}
                     </p>
+                  </div>
+                )}
+                {booking.status === "on_the_way" && (
+                  <div className="mt-4">
+                    <LiveTracking bookingId={booking.id} />
                   </div>
                 )}
               </div>

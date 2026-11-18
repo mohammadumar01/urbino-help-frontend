@@ -8,6 +8,8 @@ export interface AgentJob {
   status: JobStatus;
   service_name: string;
   address: string;
+  latitude?: number | null;
+  longitude?: number | null;
   booking_date: string;
   booking_time: string;
   price: string | number | null;

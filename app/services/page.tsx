@@ -177,6 +177,13 @@ export default function ServicesPage() {
     }
   }, []);
 
+  // Home page se ?q=... aaya ho to wahi search karo
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("q");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (q) setSearch(q.slice(0, 80));
+  }, []);
+
   // Initial load + debounced server search.
   useEffect(() => {
     const t = setTimeout(() => void load(1, search.trim()), search ? 350 : 0);

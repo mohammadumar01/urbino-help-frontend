@@ -12,6 +12,10 @@ export interface Provider {
   is_verified: boolean;
   average_rating: string;
   total_reviews: string;
+  /** Customer ki location bheji ho tab */
+  distance_km?: number | null;
+  in_range?: boolean | null;
+  service_radius_km?: number | null;
 }
 
 export interface ProvidersResponse {

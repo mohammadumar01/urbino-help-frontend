@@ -8,6 +8,8 @@ import {
 import AgentShell from "@/components/agent/AgentShell";
 import JobTimeline from "@/components/booking/JobTimeline";
 import InviteBanner from "@/components/agent/InviteBanner";
+import LocationSharer from "@/components/agent/LocationSharer";
+import { directionsUrl } from "@/lib/geoApi";
 import { CashCollect } from "@/components/payments/PaymentActions";
 import { apiError } from "@/lib/api";
 import { agentApi, type AgentJob, type AgentSummary, type JobGroup } from "@/lib/agentApi";
@@ -36,7 +38,6 @@ function time12(t: string) {
   return `${((h + 11) % 12) + 1}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
 }
 
-const mapsUrl = (address: string) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
 
 /** Agle step ka ek hi bada button */
 function nextAction(status: AgentJob["status"]) {
@@ -76,6 +77,7 @@ function AgentJobs() {
   const [search, setSearch] = useState("");
   const [otpFor, setOtpFor] = useState<AgentJob | null>(null);
   const [declineFor, setDeclineFor] = useState<AgentJob | null>(null);
+  const [shareKey, setShareKey] = useState(0);
   const autoTabbed = useRef(false);
 
   const load = useCallback(
@@ -134,6 +136,7 @@ function AgentJobs() {
       return false;
     } finally {
       setBusyId(null);
+      setShareKey((n) => n + 1);
     }
   }
 
@@ -170,6 +173,8 @@ function AgentJobs() {
       </section>
 
       <InviteBanner onJoined={() => void load(true)} />
+
+      <LocationSharer refreshKey={shareKey} />
 
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label="Summary">
         {[
@@ -335,7 +340,7 @@ function JobCard({
 
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <a
-            href={mapsUrl(job.address)}
+            href={directionsUrl(job)}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-start gap-2.5 rounded-xl bg-gray-50 p-3 text-sm text-gray-800 hover:bg-gray-100"
@@ -343,7 +348,7 @@ function JobCard({
             <MapPin size={18} className="mt-0.5 shrink-0 text-orange-600" />
             <span className="min-w-0">
               <span className="block break-words font-medium">{job.address}</span>
-              <span className="text-xs font-semibold text-blue-600">{t("Open in Google Maps")}</span>
+              <span className="text-xs font-semibold text-blue-600">{job.latitude != null ? t("Navigate (exact pin)") : t("Navigate in Google Maps")}</span>
             </span>
           </a>
           <div className="flex items-center justify-between gap-3 rounded-xl bg-gray-50 p-3 text-sm">

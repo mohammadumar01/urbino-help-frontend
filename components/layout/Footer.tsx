@@ -46,7 +46,7 @@ export default function Footer() {
               href="/"
               className="text-2xl font-bold tracking-tight"
             >
-              Urbino<span className="text-blue-500">.</span>
+              Urbino<span className="text-orange-400"> Help</span>
             </Link>
 
             <p className="mt-5 text-sm leading-7 text-gray-400">

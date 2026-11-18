@@ -9,6 +9,7 @@ import UrbinoLogo from "@/components/brand/UrbinoLogo";
 import { clearSession, useAuth } from "@/lib/auth";
 import { useT } from "@/lib/i18n";
 import LanguageToggle from "@/components/layout/LanguageToggle";
+import NotificationBell from "@/components/layout/NotificationBell";
 
 const TABS = [
   { href: "/agent/dashboard", label: "My jobs", icon: ClipboardList },
@@ -48,6 +49,7 @@ function Shell({ children }: { children: ReactNode }) {
           </nav>
           <div className="flex items-center gap-2">
             <LanguageToggle />
+            <NotificationBell />
             <span className="hidden max-w-[140px] truncate text-sm text-gray-600 md:inline">{user?.name}</span>
             <button
               type="button"

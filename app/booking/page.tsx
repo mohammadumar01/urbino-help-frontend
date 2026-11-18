@@ -14,6 +14,8 @@ import { getSlots } from "@/lib/providerApi";
 import type { Provider } from "@/lib/providersApi";
 import type { Service } from "@/lib/servicesApi";
 import { useLang, useT } from "@/lib/i18n";
+import AddressPicker from "@/components/maps/AddressPicker";
+import { lastPoint, rememberPoint, type LatLng } from "@/lib/geoApi";
 
 type Booking = {
   id: number;
@@ -84,6 +86,8 @@ function BookingContent() {
   const [time, setTime] = useState("");
   const [address, setAddress] = useState("");
   const [lastAddress, setLastAddress] = useState("");
+  const [point, setPoint] = useState<LatLng | null>(null);
+  const [autoAddress, setAutoAddress] = useState("");
   const [slots, setSlots] = useState<{ loading: boolean; list: string[]; fromSchedule: boolean }>({ loading: false, list: [], fromSchedule: false });
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -112,7 +116,13 @@ function BookingContent() {
       try {
         const [s, p] = await Promise.all([
           api.get<{ service: Service }>(`/api/services/${serviceId}`),
-          api.get<{ providers: Provider[] }>("/api/service-discovery/providers", { params: { service_id: serviceId } }),
+          api.get<{ providers: Provider[] }>("/api/service-discovery/providers", {
+            // Pichli location yaad ho to har professional ki doori bhi dikhao
+            params: (() => {
+              const near = lastPoint();
+              return near ? { service_id: serviceId, lat: near.lat.toFixed(2), lng: near.lng.toFixed(2) } : { service_id: serviceId };
+            })(),
+          }),
         ]);
         if (cancelled) return;
         setService(s.data.service);
@@ -167,7 +177,9 @@ function BookingContent() {
         address: address.trim(),
         booking_date: date,
         booking_time: time,
+        ...(point ? { latitude: point.lat, longitude: point.lng } : {}),
       });
+      if (point) rememberPoint(point);
       try {
         localStorage.setItem(ADDRESS_KEY, address.trim());
       } catch {
@@ -297,6 +309,11 @@ function BookingContent() {
                           )}
                           {p.experience_years != null && <span>· {p.experience_years} {t("yrs")}</span>}
                           {p.service_area && <span className="truncate">· {p.service_area}</span>}
+                          {p.distance_km != null && (
+                            <span className={p.in_range === false ? "text-amber-700" : "text-emerald-700"}>
+                              · {p.distance_km} km {p.in_range === false ? t("(outside usual area)") : t("away")}
+                            </span>
+                          )}
                         </p>
                       </button>
                     );
@@ -362,7 +379,11 @@ function BookingContent() {
               {lastAddress && lastAddress !== address && (
                 <button
                   type="button"
-                  onClick={() => setAddress(lastAddress)}
+                  onClick={() => {
+                    setAddress(lastAddress);
+                    const lp = lastPoint();
+                    if (lp) setPoint(lp);
+                  }}
                   className="mb-3 flex w-full items-start gap-2 rounded-xl border border-gray-200 bg-white p-3 text-left text-sm hover:border-gray-400"
                 >
                   <MapPin size={16} className="mt-0.5 shrink-0 text-orange-600" />
@@ -372,8 +393,19 @@ function BookingContent() {
                   </span>
                 </button>
               )}
-              <label htmlFor="address" className="sr-only">
-                {t("Full address")}
+              <AddressPicker
+                value={point}
+                onChange={({ point: p, place }) => {
+                  setPoint(p);
+                  // Map se mila address bharo, par user ka likha hua mat mitao
+                  if (place && (!address.trim() || address === autoAddress)) {
+                    setAddress(place.label);
+                    setAutoAddress(place.label);
+                  }
+                }}
+              />
+              <label htmlFor="address" className="mt-4 block text-sm font-semibold text-gray-800">
+                {t("Full address")} <span className="font-normal text-gray-500">{t("(add house / flat no.)")}</span>
               </label>
               <textarea
                 id="address"
@@ -382,7 +414,7 @@ function BookingContent() {
                 rows={3}
                 maxLength={500}
                 placeholder={t("House / flat no., street, landmark, city")}
-                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none focus:border-gray-500"
+                className="mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none focus:border-gray-500"
               />
             </Step>
           </div>
@@ -396,6 +428,7 @@ function BookingContent() {
               <Row icon={CalendarDays} label={t("Day")} value={date ? `${days.find((d) => d.iso === date)?.top}, ${days.find((d) => d.iso === date)?.day}` : t("Pick a day")} muted={!date} />
               <Row icon={Clock3} label={t("Time")} value={time ? time12(time) : t("Pick a time")} muted={!time} />
               <Row icon={MapPin} label={t("Address")} value={address.trim() || t("Add address")} muted={!address.trim()} />
+              {point && <p className="-mt-1 pl-7 text-xs font-medium text-emerald-700">✓ {t("Exact location pinned on map")}</p>}
             </dl>
             <div className="mt-5 flex items-baseline justify-between border-t border-gray-100 pt-4">
               <span className="text-sm text-gray-500">{t("Total")}</span>

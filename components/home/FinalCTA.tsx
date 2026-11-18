@@ -12,7 +12,7 @@ export default function FinalCTA() {
           <div className="relative grid items-center gap-8 lg:grid-cols-[1fr_auto]">
             <div className="max-w-2xl">
               <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
-                Whatever you need, find it on Urbino.
+                Whatever you need, find it on Urbino Help.
               </h2>
               <p className="mt-4 text-base leading-7 text-blue-100">
                 Book trusted professionals in minutes, or start earning by offering your own services.

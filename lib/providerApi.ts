@@ -12,6 +12,9 @@ export interface ProviderProfile {
   hourly_rate: string | number | null;
   profile_image: string | null;
   is_verified: boolean;
+  latitude?: string | number | null;
+  longitude?: string | number | null;
+  service_radius_km?: number | null;
 }
 
 export interface OnboardingStep {

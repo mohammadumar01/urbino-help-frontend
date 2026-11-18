@@ -18,6 +18,7 @@ import {
 import api from "../../../lib/api";
 import { CashCollect } from "@/components/payments/PaymentActions";
 import JobTimeline from "@/components/booking/JobTimeline";
+import LiveTracking from "@/components/maps/LiveTracking";
 import type { PaymentStatus } from "@/lib/paymentsApi";
 
 interface Booking {
@@ -693,6 +694,12 @@ async function fetchAgents() {
           <div className="mt-5">
             <JobTimeline booking={booking} compact />
           </div>
+
+          {(booking.status === "on_the_way" || booking.status === "in_progress") && (
+            <div className="mt-4">
+              <LiveTracking bookingId={booking.id} className="h-48" />
+            </div>
+          )}
 
           {!booking.agent_id && booking.agent_declined_reason && (
             <p className="mt-4 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-800">
