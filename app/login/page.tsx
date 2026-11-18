@@ -48,6 +48,17 @@ function LoginForm() {
 
       saveSession(token, user);
 
+      // Admin bhi isi page se login kar sake: admin panel ka session bhi set karo
+      if (user.role === "admin") {
+        try {
+          sessionStorage.setItem("adminToken", token);
+        } catch {
+          /* private mode: admin login page use karein */
+        }
+        router.push("/admin/dashboard");
+        return;
+      }
+
       // ?next=/booking?... wapas wahi le jao jahan se aaye the (sirf apni site ke andar)
       const next = searchParams.get("next");
       const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : null;

@@ -33,7 +33,7 @@ import { getServices, Service } from "../../lib/servicesApi";
 const ROUTES = {
   home: "/",
   bookings: "/bookings",
-  becomeProvider: "/become-provider",
+  becomeProvider: "/provider",
   service: (id: Service["id"]) => `/service/${id}`,
 };
 

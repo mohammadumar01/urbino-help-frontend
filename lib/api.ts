@@ -41,6 +41,11 @@ api.interceptors.response.use(
 export function apiError(error: unknown, fallback = "Something went wrong. Please try again."): string {
   const e = error as AxiosError<{ message?: string }>;
   if (e?.response?.data?.message) return e.response.data.message;
+  // Server/tunnel ne JSON ki jagah kuch aur bheja (jaise "no tunnel", 502): yeh password ki galti nahi
+  const status = e?.response?.status ?? 0;
+  if (e?.response && (status >= 500 || status === 404 || typeof e.response.data !== "object")) {
+    return "The server is not reachable right now. Please refresh in a minute and try again.";
+  }
   if (e?.code === "ECONNABORTED") return "The server took too long to respond. Please try again.";
   if (e?.request && !e?.response) return "Can't reach the server. Check your connection and try again.";
   return fallback;
