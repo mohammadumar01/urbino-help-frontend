@@ -61,10 +61,10 @@ const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
     items: [
       { label: "Payments", icon: "rupee", href: "/admin/payments" },
       { label: "Provider payouts", icon: "wallet", href: "/admin/payouts" },
-      { label: "Reports", icon: "pulse" },
+      { label: "Reports", icon: "pulse", href: "/admin/reports" },
     ],
   },
-  { title: "Catalog", items: [{ label: "Services", icon: "layers" }] },
+  { title: "Catalog", items: [{ label: "Services", icon: "layers", href: "/admin/services" }] },
 ];
 
 const ALL_ITEMS = NAV_GROUPS.flatMap((g) => g.items);
