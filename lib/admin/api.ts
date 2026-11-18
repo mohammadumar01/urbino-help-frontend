@@ -1,4 +1,4 @@
-export const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5500";
+export const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5500";
 
 /** Jahan admin login hota hai. 401 ya Sign out par yahin bhejenge. */
 export const LOGIN_PATH = "/admin/login";

@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5500";
+const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5500";
 const PAGE_SIZE = 10;
 
 /* ----------------------------- Types ----------------------------- */

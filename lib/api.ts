@@ -2,7 +2,7 @@ import axios, { AxiosError } from "axios";
 import { clearSession, getToken } from "./auth";
 
 /** Backend ka URL .env.local ke NEXT_PUBLIC_API_URL se aata hai. */
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5500";
+export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5500";
 
 const api = axios.create({
   baseURL: API_URL,
