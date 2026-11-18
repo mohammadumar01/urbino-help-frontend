@@ -1,14 +1,14 @@
-# Urbino Help â€” Frontend
+# Urbino — Frontend
 
-Urbino Help is a service-booking platform frontend designed to provide users with an interface for exploring services and interacting with the platform's backend APIs.
+Urbino is a service-booking platform frontend designed to provide users with an interface for exploring services and interacting with the platform's backend APIs.
 
 ## Overview
 
-This repository contains the frontend application for Urbino Help. The backend is maintained separately in the [`urbino-help-backend`](https://github.com/mohammadumar01/urbino-help-backend) repository.
+This repository contains the frontend application for Urbino. The backend is maintained separately in the [`urbino-help-backend`](https://github.com/mohammadumar01/urbino-help-backend) repository.
 
 ## Features
 
-- Frontend interface for the Urbino Help platform
+- Frontend interface for the Urbino platform
 - Integration with backend APIs
 - Service data fetching from the backend
 - API-driven user interface
@@ -59,7 +59,7 @@ npm run dev
 
 The backend repository is available here:
 
-[Urbino Help Backend](https://github.com/mohammadumar01/urbino-help-backend)
+[Urbino Backend](https://github.com/mohammadumar01/urbino-help-backend)
 
 ## Project Status
 

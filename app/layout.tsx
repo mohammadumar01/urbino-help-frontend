@@ -23,8 +23,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Urbino Help | Trusted home services near you",
-    template: "%s | Urbino Help",
+    default: "Urbino | Trusted home services near you",
+    template: "%s | Urbino",
   },
   description:
     "Book verified professionals for cleaning, repairs, beauty, tutoring and more. Transparent prices, real reviews.",

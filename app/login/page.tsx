@@ -115,10 +115,10 @@ function LoginForm() {
 
           <div className="text-center">
 
-            <Link href="/" className="mx-auto flex w-fit flex-col items-center gap-2" aria-label="Urbino Help home">
+            <Link href="/" className="mx-auto flex w-fit flex-col items-center gap-2" aria-label="Urbino home">
               <UrbinoLogo className="h-14 w-14 drop-shadow-[0_6px_16px_rgba(238,116,48,0.30)]" />
               <span className="text-lg font-bold tracking-tight text-gray-950">
-                Urbino<span className="text-orange-500"> Help</span>
+                Urbino
               </span>
             </Link>
 

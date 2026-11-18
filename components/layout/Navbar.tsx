@@ -41,7 +41,7 @@ export default function Navbar() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/urbino-logo.png" alt="Urbino logo" className="h-10 w-10 object-contain" />
           <span className="text-xl font-bold tracking-tight text-gray-900 sm:text-2xl">
-            Urbino<span className="text-orange-500"> Help</span>
+            Urbino
           </span>
         </Link>
 

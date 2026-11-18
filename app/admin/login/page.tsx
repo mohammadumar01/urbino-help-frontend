@@ -42,14 +42,14 @@ function Icon({ d, className = "h-5 w-5" }: { d: string; className?: string }) {
   );
 }
 
-/** Urbino Help logo: round badge with gradient disc, white U-ring and H cutouts. */
+/** Urbino logo: round badge with gradient disc, white U-ring and H cutouts. */
 function UrbinoLogo({ className = "h-12 w-12" }: { className?: string }) {
   const uid = useId().replace(/:/g, "");
   const ring = `ring-${uid}`;
   const disc = `disc-${uid}`;
 
   return (
-    <svg viewBox="0 0 640 640" className={className} role="img" aria-label="Urbino Help">
+    <svg viewBox="0 0 640 640" className={className} role="img" aria-label="Urbino">
       <defs>
         <linearGradient id={ring} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="640">
           <stop offset="0" stopColor="#E5402B" />
@@ -176,7 +176,7 @@ export default function AdminLoginPage() {
       >
         <div className="flex items-center gap-4">
           <UrbinoLogo className="h-12 w-12 drop-shadow-[0_6px_16px_rgba(238,116,48,0.35)]" />
-          <span className="text-lg font-semibold tracking-tight">Urbino Help</span>
+          <span className="text-lg font-semibold tracking-tight">Urbino</span>
         </div>
 
         <div className="max-w-lg">
@@ -184,7 +184,7 @@ export default function AdminLoginPage() {
             Run every service request from one place.
           </h1>
           <p className="mt-5 max-w-md text-base leading-7 text-stone-400">
-            The administration workspace for Urbino Help, built for the team that
+            The administration workspace for Urbino, built for the team that
             keeps customers and professionals connected.
           </p>
 
@@ -204,7 +204,7 @@ export default function AdminLoginPage() {
         </div>
 
         <p className="text-xs text-stone-500">
-          © {new Date().getFullYear()} Urbino Help. All rights reserved.
+          © {new Date().getFullYear()} Urbino. All rights reserved.
         </p>
       </section>
 
@@ -214,7 +214,7 @@ export default function AdminLoginPage() {
           {/* Mobile brand */}
           <div className="mb-10 flex items-center gap-3 lg:hidden">
             <UrbinoLogo className="h-11 w-11" />
-            <span className="text-lg font-semibold tracking-tight">Urbino Help</span>
+            <span className="text-lg font-semibold tracking-tight">Urbino</span>
           </div>
 
           <h2 className="text-3xl font-semibold tracking-tight text-slate-950">

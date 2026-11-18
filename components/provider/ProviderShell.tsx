@@ -34,7 +34,7 @@ function Shell({ title, subtitle, actions, children }: { title: string; subtitle
           <Link href="/provider/dashboard" className="flex items-center gap-2.5">
             <UrbinoLogo className="h-9 w-9" />
             <span className="leading-tight">
-              <span className="block text-base font-bold text-gray-950">Urbino Help</span>
+              <span className="block text-base font-bold text-gray-950">Urbino</span>
               <span className="block text-xs text-gray-500">{t("Partner workspace")}</span>
             </span>
           </Link>

@@ -289,7 +289,7 @@ export const HI: Record<string, string> = {
     "अपना ईमेल और अकाउंट वाला मोबाइल नंबर डालें। हमारी टीम उसी नंबर पर कॉल करके पहचान करेगी और पासवर्ड रीसेट करेगी।",
   Email: "ईमेल",
   "Request password reset": "पासवर्ड रीसेट की रिक्वेस्ट भेजें",
-  "Urbino Help will never ask for your password or OTP on a call.": "Urbino Help कभी भी कॉल पर आपका पासवर्ड या OTP नहीं माँगेगा।",
+  "Urbino will never ask for your password or OTP on a call.": "Urbino कभी भी कॉल पर आपका पासवर्ड या OTP नहीं माँगेगा।",
   "If these details match an account, our team will call your registered number within a few hours to reset your password.":
     "अगर ये जानकारी किसी अकाउंट से मेल खाती है, तो हमारी टीम कुछ घंटों में आपके रजिस्टर्ड नंबर पर कॉल करके पासवर्ड रीसेट करेगी।",
 

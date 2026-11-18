@@ -86,7 +86,7 @@ export default function ForgotPasswordPage() {
         <Link href="/" className="mx-auto flex w-fit items-center gap-2.5">
           <UrbinoLogo className="h-10 w-10" />
           <span className="text-xl font-bold text-gray-950">
-            Urbino<span className="text-orange-500"> Help</span>
+            Urbino
           </span>
         </Link>
 
@@ -165,7 +165,7 @@ export default function ForgotPasswordPage() {
                 </button>
               </form>
               <p className="mt-5 flex items-center gap-2 rounded-xl bg-gray-50 p-3 text-xs text-gray-600">
-                <Headphones size={15} className="shrink-0" /> {t("Urbino Help will never ask for your password or OTP on a call.")}
+                <Headphones size={15} className="shrink-0" /> {t("Urbino will never ask for your password or OTP on a call.")}
               </p>
             </>
           )}

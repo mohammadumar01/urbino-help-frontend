@@ -102,7 +102,7 @@ function UrbinoLogo({ className = "h-9 w-9" }: { className?: string }) {
   const disc = `disc-${uid}`;
 
   return (
-    <svg viewBox="0 0 640 640" className={className} role="img" aria-label="Urbino Help">
+    <svg viewBox="0 0 640 640" className={className} role="img" aria-label="Urbino">
       <defs>
         <linearGradient id={ring} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="640">
           <stop offset="0" stopColor="#E5402B" />
@@ -235,7 +235,7 @@ export default function ServicesPage() {
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-5 lg:px-8">
           <Link href={ROUTES.home} className="flex items-center gap-3 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E8692A]">
             <UrbinoLogo className="h-9 w-9" />
-            <span className="text-lg font-semibold tracking-tight text-slate-900">Urbino Help</span>
+            <span className="text-lg font-semibold tracking-tight text-slate-900">Urbino</span>
           </Link>
 
           <nav className="flex items-center gap-2 sm:gap-3" aria-label="Primary">
@@ -541,9 +541,9 @@ export default function ServicesPage() {
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-5 py-8 text-sm text-slate-500 sm:flex-row lg:px-8">
           <div className="flex items-center gap-2.5">
             <UrbinoLogo className="h-7 w-7" />
-            <span className="font-medium text-slate-700">Urbino Help</span>
+            <span className="font-medium text-slate-700">Urbino</span>
           </div>
-          <p>© {new Date().getFullYear()} Urbino Help. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Urbino. All rights reserved.</p>
         </div>
       </footer>
     </main>

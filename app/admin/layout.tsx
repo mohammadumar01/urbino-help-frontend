@@ -90,7 +90,7 @@ function Sidebar({
       >
         <UrbinoLogo className="h-9 w-9 shrink-0 drop-shadow-[0_4px_12px_rgba(238,116,48,0.35)]" />
         <span className={`leading-tight ${hide}`}>
-          <span className="block text-sm font-semibold text-white">Urbino Help</span>
+          <span className="block text-sm font-semibold text-white">Urbino</span>
           <span className="block text-xs text-stone-500">Admin console</span>
         </span>
       </Link>
@@ -258,7 +258,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               </button>
               {/* Desktop par page ka apna breadcrumb hai; yahan sirf mobile ke liye title */}
               <span className="text-sm font-medium text-slate-900 lg:hidden">{current?.label ?? "Admin"}</span>
-              <span className="hidden text-sm text-slate-500 lg:inline">Urbino Help · Admin console</span>
+              <span className="hidden text-sm text-slate-500 lg:inline">Urbino · Admin console</span>
             </div>
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-orange-100 text-xs font-semibold text-orange-700">AD</span>
           </header>

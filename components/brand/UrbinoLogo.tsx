@@ -2,14 +2,14 @@
 
 import { useId } from "react";
 
-/** Urbino Help logo: round badge with gradient disc, white U-ring and H cutouts. */
+/** Urbino logo: round badge with gradient disc, white U-ring and H cutouts. */
 export default function UrbinoLogo({ className = "h-9 w-9" }: { className?: string }) {
   const uid = useId().replace(/:/g, "");
   const ring = `ring-${uid}`;
   const disc = `disc-${uid}`;
 
   return (
-    <svg viewBox="0 0 640 640" className={className} role="img" aria-label="Urbino Help">
+    <svg viewBox="0 0 640 640" className={className} role="img" aria-label="Urbino">
       <defs>
         <linearGradient id={ring} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="640">
           <stop offset="0" stopColor="#E5402B" />

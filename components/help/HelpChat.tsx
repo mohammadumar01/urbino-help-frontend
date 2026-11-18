@@ -114,7 +114,7 @@ export default function HelpChat() {
       {open && (
         <section
           role="dialog"
-          aria-label="Urbino help"
+          aria-label="Urbino support chat"
           className="fixed inset-x-0 bottom-0 z-[60] flex h-[85vh] flex-col overflow-hidden rounded-t-3xl border border-gray-200 bg-white shadow-2xl sm:inset-x-auto sm:bottom-5 sm:right-5 sm:h-[600px] sm:w-[380px] sm:rounded-3xl"
         >
           <header className="flex items-center justify-between gap-3 border-b border-gray-100 bg-gray-950 px-4 py-3 text-white">
@@ -123,7 +123,7 @@ export default function HelpChat() {
                 <UrbinoLogo className="h-8 w-8" />
               </span>
               <div className="leading-tight">
-                <p className="text-sm font-semibold">Urbino Help</p>
+                <p className="text-sm font-semibold">Urbino</p>
                 <p className="flex items-center gap-1 text-xs text-gray-300">
                   <Sparkles size={11} /> Assistant · people on standby
                 </p>

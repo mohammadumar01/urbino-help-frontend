@@ -37,7 +37,7 @@ export default function ProviderPage() {
               For professionals
             </p>
             <h1 className="mt-4 text-4xl font-bold tracking-tight text-gray-950 sm:text-5xl lg:text-6xl">
-              Grow your service business with <span className="text-blue-600">Urbino Help.</span>
+              Grow your service business with <span className="text-blue-600">Urbino.</span>
             </h1>
             <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-gray-600">
               Join as a verified professional and get bookings from customers
