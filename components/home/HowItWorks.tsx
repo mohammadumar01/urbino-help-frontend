@@ -1,3 +1,6 @@
+"use client";
+
+import { useT } from "@/lib/i18n";
 import { CalendarCheck, Search, ShieldCheck, ThumbsUp } from "lucide-react";
 
 const steps = [
@@ -8,13 +11,14 @@ const steps = [
 ];
 
 export default function HowItWorks() {
+  const t = useT();
   return (
     <section className="bg-white">
       <div className="mx-auto max-w-7xl px-6 py-16 lg:px-8 lg:py-20">
         <div className="mx-auto max-w-2xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-600">How it works</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-600">{t("How it works")}</p>
           <h2 className="mt-2 text-3xl font-bold tracking-tight text-gray-950 sm:text-4xl">
-            Booking takes four simple steps
+            {t("Booking takes four simple steps")}
           </h2>
         </div>
 
@@ -32,8 +36,8 @@ export default function HowItWorks() {
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 text-white">
                   <Icon size={22} />
                 </div>
-                <h3 className="mt-5 text-lg font-semibold text-gray-950">{step.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-gray-600">{step.description}</p>
+                <h3 className="mt-5 text-lg font-semibold text-gray-950">{t(step.title)}</h3>
+                <p className="mt-2 text-sm leading-6 text-gray-600">{t(step.description)}</p>
               </article>
             );
           })}

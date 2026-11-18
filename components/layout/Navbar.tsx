@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LayoutDashboard, LogOut, Menu, X, CalendarCheck } from "lucide-react";
 import { clearSession, ROLE_HOME, useAuth } from "@/lib/auth";
+import { useT } from "@/lib/i18n";
+import LanguageToggle from "./LanguageToggle";
 
 const links = [
   { href: "/services", label: "Services" },
@@ -15,6 +17,7 @@ const links = [
 export default function Navbar() {
   const user = useAuth();
   const router = useRouter();
+  const t = useT();
   const [open, setOpen] = useState(false);
 
   function logout() {
@@ -44,12 +47,13 @@ export default function Navbar() {
         <nav className="hidden items-center gap-8 md:flex">
           {links.map((l) => (
             <Link key={l.href} href={l.href} className="text-sm font-medium text-gray-600 hover:text-gray-900">
-              {l.label}
+              {t(l.label)}
             </Link>
           ))}
         </nav>
 
         <div className="flex items-center gap-3">
+          <LanguageToggle />
           {/* user === undefined: abhi pata nahi, kuch mat dikhao (flash na ho) */}
           {user === null && (
             <>
@@ -57,13 +61,13 @@ export default function Navbar() {
                 href="/login"
                 className="hidden rounded-full px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-100 md:block"
               >
-                Log in
+                {t("Log in")}
               </Link>
               <Link
                 href="/register"
                 className="hidden rounded-full bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-gray-800 md:block"
               >
-                Get Started
+                {t("Get Started")}
               </Link>
             </>
           )}
@@ -74,7 +78,7 @@ export default function Navbar() {
                 href={dashboard.href}
                 className="flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-100"
               >
-                <dashboard.icon size={17} /> {dashboard.label}
+                <dashboard.icon size={17} /> {t(dashboard.label)}
               </Link>
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white" title={user.name}>
                 {user.name?.[0]?.toUpperCase() || "U"}
@@ -82,7 +86,7 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={logout}
-                aria-label="Log out"
+                aria-label={t("Log out")}
                 className="rounded-full p-2 text-gray-600 hover:bg-gray-100"
               >
                 <LogOut size={18} />
@@ -92,7 +96,7 @@ export default function Navbar() {
 
           <button
             type="button"
-            aria-label={open ? "Close menu" : "Open menu"}
+            aria-label={t(open ? "Close menu" : "Open menu")}
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
             className="rounded-full p-2 text-gray-700 hover:bg-gray-100 md:hidden"
@@ -112,7 +116,7 @@ export default function Navbar() {
                 onClick={() => setOpen(false)}
                 className="rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
-                {l.label}
+                {t(l.label)}
               </Link>
             ))}
             {user && dashboard && (
@@ -121,7 +125,7 @@ export default function Navbar() {
                 onClick={() => setOpen(false)}
                 className="rounded-lg px-3 py-2.5 text-sm font-semibold text-gray-900 hover:bg-gray-50"
               >
-                {dashboard.label}
+                {t(dashboard.label)}
               </Link>
             )}
           </nav>
@@ -132,15 +136,15 @@ export default function Navbar() {
                 onClick={logout}
                 className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-red-600 hover:bg-red-50"
               >
-                Log out ({user.name})
+                {t("Log out")} ({user.name})
               </button>
             ) : (
               <div className="flex gap-2">
                 <Link href="/login" onClick={() => setOpen(false)} className="flex-1 rounded-lg border border-gray-200 px-4 py-2.5 text-center text-sm font-semibold">
-                  Log in
+                  {t("Log in")}
                 </Link>
                 <Link href="/register" onClick={() => setOpen(false)} className="flex-1 rounded-lg bg-gray-900 px-4 py-2.5 text-center text-sm font-semibold text-white">
-                  Get Started
+                  {t("Get Started")}
                 </Link>
               </div>
             )}

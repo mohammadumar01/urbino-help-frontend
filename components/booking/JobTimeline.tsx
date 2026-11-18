@@ -1,4 +1,7 @@
+"use client";
+
 import { Check } from "lucide-react";
+import { useLang, useT } from "@/lib/i18n";
 
 /**
  * Booking ki progress: customer, provider aur agent teeno ek hi tarah dekhte hain.
@@ -25,25 +28,27 @@ const STEPS: { key: string; label: string; reachedAt: string; time: keyof Timeli
   { key: "done", label: "Done", reachedAt: "completed", time: "completed_at" },
 ];
 
-function timeOf(v?: string | null) {
+function timeOf(v?: string | null, locale = "en-IN") {
   if (!v) return "";
   const d = new Date(v);
-  return Number.isNaN(d.getTime()) ? "" : d.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" });
+  return Number.isNaN(d.getTime()) ? "" : d.toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit" });
 }
 
 export default function JobTimeline({ booking, compact = false }: { booking: TimelineBooking; compact?: boolean }) {
+  const t = useT();
+  const lang = useLang();
   const status = booking.status || "pending";
   if (status === "cancelled") {
-    return <p className="rounded-xl bg-gray-100 px-3 py-2 text-sm font-medium text-gray-600">This booking was cancelled.</p>;
+    return <p className="rounded-xl bg-gray-100 px-3 py-2 text-sm font-medium text-gray-600">{t("This booking was cancelled.")}</p>;
   }
   const idx = ORDER.indexOf(status);
 
   return (
-    <ol className="flex w-full items-start" aria-label="Booking progress">
+    <ol className="flex w-full items-start" aria-label={t("Booking progress")}>
       {STEPS.map((s, i) => {
         const done = idx >= ORDER.indexOf(s.reachedAt);
         const nextUp = !done && (i === 0 || idx >= ORDER.indexOf(STEPS[i - 1].reachedAt));
-        const t = timeOf(booking[s.time] as string | null | undefined);
+        const at = timeOf(booking[s.time] as string | null | undefined, lang === "hi" ? "hi-IN" : "en-IN");
         return (
           <li key={s.key} className="relative flex flex-1 flex-col items-center text-center">
             {i > 0 && (
@@ -64,9 +69,9 @@ export default function JobTimeline({ booking, compact = false }: { booking: Tim
               {done ? <Check size={13} strokeWidth={3} /> : i + 1}
             </span>
             <span className={`mt-1.5 text-[11px] font-semibold leading-tight ${done ? "text-gray-900" : nextUp ? "text-orange-700" : "text-gray-400"}`}>
-              {s.label}
+              {t(s.label)}
             </span>
-            {!compact && t && done && <span className="text-[10px] text-gray-500">{t}</span>}
+            {!compact && at && done && <span className="text-[10px] text-gray-500">{at}</span>}
           </li>
         );
       })}

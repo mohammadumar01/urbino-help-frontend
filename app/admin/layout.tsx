@@ -22,6 +22,7 @@ const PATHS: Record<string, string> = {
   layers: "m12 2 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 17l9 5 9-5",
   rupee: "M6 4h12M6 9h12M9 4c4 0 6 2 6 5s-2 5-6 5l7 6",
   pulse: "M3 12h4l3-8 4 16 3-8h4",
+  wallet: "M3 7a2 2 0 0 1 2-2h13v4M3 7v10a2 2 0 0 0 2 2h15V9H5a2 2 0 0 1-2-2ZM16 14h.01",
   logout: "M10 17l5-5-5-5M15 12H3M12 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6",
   menu: "M4 6h16M4 12h16M4 18h16",
   left: "m15 18-6-6 6-6",
@@ -59,6 +60,7 @@ const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
     title: "Finance",
     items: [
       { label: "Payments", icon: "rupee", href: "/admin/payments" },
+      { label: "Provider payouts", icon: "wallet", href: "/admin/payouts" },
       { label: "Reports", icon: "pulse" },
     ],
   },

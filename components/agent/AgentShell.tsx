@@ -7,6 +7,8 @@ import { ClipboardList, LogOut, UserRound } from "lucide-react";
 import RequireRole from "@/components/auth/RequireRole";
 import UrbinoLogo from "@/components/brand/UrbinoLogo";
 import { clearSession, useAuth } from "@/lib/auth";
+import { useT } from "@/lib/i18n";
+import LanguageToggle from "@/components/layout/LanguageToggle";
 
 const TABS = [
   { href: "/agent/dashboard", label: "My jobs", icon: ClipboardList },
@@ -17,6 +19,7 @@ function Shell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const user = useAuth();
+  const t = useT();
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24 sm:pb-0">
@@ -26,7 +29,7 @@ function Shell({ children }: { children: ReactNode }) {
             <UrbinoLogo className="h-9 w-9" />
             <span className="leading-tight">
               <span className="block text-base font-bold text-gray-950">Urbino Help</span>
-              <span className="block text-xs text-gray-500">Professional app</span>
+              <span className="block text-xs text-gray-500">{t("Professional app")}</span>
             </span>
           </Link>
           <nav aria-label="Agent" className="hidden items-center gap-1 sm:flex">
@@ -39,15 +42,16 @@ function Shell({ children }: { children: ReactNode }) {
                   pathname === href ? "bg-orange-50 text-orange-700" : "text-gray-600 hover:bg-gray-100"
                 }`}
               >
-                <Icon size={16} /> {label}
+                <Icon size={16} /> {t(label)}
               </Link>
             ))}
           </nav>
           <div className="flex items-center gap-2">
+            <LanguageToggle />
             <span className="hidden max-w-[140px] truncate text-sm text-gray-600 md:inline">{user?.name}</span>
             <button
               type="button"
-              aria-label="Log out"
+              aria-label={t("Log out")}
               onClick={() => {
                 clearSession();
                 router.push("/login");
@@ -71,7 +75,7 @@ function Shell({ children }: { children: ReactNode }) {
             aria-current={pathname === href ? "page" : undefined}
             className={`flex flex-col items-center gap-1 py-2.5 text-xs font-semibold ${pathname === href ? "text-orange-600" : "text-gray-500"}`}
           >
-            <Icon size={20} /> {label}
+            <Icon size={20} /> {t(label)}
           </Link>
         ))}
       </nav>

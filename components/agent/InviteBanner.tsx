@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { BadgeCheck, Loader2, MapPin, Star, Users } from "lucide-react";
 import api, { apiError } from "@/lib/api";
+import { useT } from "@/lib/i18n";
 
 type Invite = {
   id: number;
@@ -15,6 +16,7 @@ type Invite = {
 
 /** Agent ko provider ke team invites: Join / No thanks. */
 export default function InviteBanner({ onJoined }: { onJoined?: () => void }) {
+  const t = useT();
   const [invites, setInvites] = useState<Invite[]>([]);
   const [busy, setBusy] = useState<number | null>(null);
   const [msg, setMsg] = useState("");
@@ -36,11 +38,11 @@ export default function InviteBanner({ onJoined }: { onJoined?: () => void }) {
     setBusy(id);
     try {
       const r = await api.put<{ message: string }>(`/api/agent/invites/${id}/${accept ? "accept" : "decline"}`);
-      setMsg(r.data.message);
+      setMsg(t(r.data.message));
       await load();
       if (accept) onJoined?.();
     } catch (e) {
-      setMsg(apiError(e, "Could not answer the invite."));
+      setMsg(t(apiError(e, "Could not answer the invite.")));
     } finally {
       setBusy(null);
     }
@@ -51,7 +53,7 @@ export default function InviteBanner({ onJoined }: { onJoined?: () => void }) {
   return (
     <section className="rounded-2xl border border-blue-200 bg-blue-50/60 p-5">
       <h2 className="flex items-center gap-2 font-bold text-gray-950">
-        <Users size={18} className="text-blue-600" /> Team invites
+        <Users size={18} className="text-blue-600" /> {t("Team invites")}
       </h2>
       {msg && <p className="mt-2 text-sm text-gray-700">{msg}</p>}
       <ul className="mt-3 space-y-3">
@@ -74,11 +76,11 @@ export default function InviteBanner({ onJoined }: { onJoined?: () => void }) {
                   </span>
                 )}
               </p>
-              <p className="mt-1 text-sm text-gray-600">wants you in their team. You&apos;ll get jobs from them here.</p>
+              <p className="mt-1 text-sm text-gray-600">{t("wants you in their team. You'll get jobs from them here.")}</p>
             </div>
             <div className="flex gap-2">
               <button type="button" disabled={busy === i.id} onClick={() => void answer(i.id, false)} className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-600">
-                No thanks
+                {t("No thanks")}
               </button>
               <button
                 type="button"
@@ -86,7 +88,7 @@ export default function InviteBanner({ onJoined }: { onJoined?: () => void }) {
                 onClick={() => void answer(i.id, true)}
                 className="inline-flex items-center gap-2 rounded-xl bg-gray-950 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
               >
-                {busy === i.id && <Loader2 size={15} className="animate-spin" />} Join team
+                {busy === i.id && <Loader2 size={15} className="animate-spin" />} {t("Join team")}
               </button>
             </div>
           </li>

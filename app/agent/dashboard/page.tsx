@@ -12,6 +12,7 @@ import { CashCollect } from "@/components/payments/PaymentActions";
 import { apiError } from "@/lib/api";
 import { agentApi, type AgentJob, type AgentSummary, type JobGroup } from "@/lib/agentApi";
 import { useAuth } from "@/lib/auth";
+import { useLang, useT, type Lang } from "@/lib/i18n";
 
 const TABS: { key: JobGroup; label: string; empty: string }[] = [
   { key: "new", label: "New requests", empty: "No new requests. We'll show them here as soon as your provider assigns one." },
@@ -21,13 +22,13 @@ const TABS: { key: JobGroup; label: string; empty: string }[] = [
 
 const DECLINE_REASONS = ["Too far from my area", "Not available at this time", "I don't have the right tools", "Feeling unwell"];
 
-function dayLabel(date: string) {
+function dayLabel(date: string, lang: Lang = "en") {
   const today = new Date(Date.now() + 5.5 * 3600 * 1000).toISOString().slice(0, 10);
   const tomorrow = new Date(Date.now() + 29.5 * 3600 * 1000).toISOString().slice(0, 10);
-  if (date === today) return "Today";
-  if (date === tomorrow) return "Tomorrow";
+  if (date === today) return lang === "hi" ? "आज" : "Today";
+  if (date === tomorrow) return lang === "hi" ? "कल" : "Tomorrow";
   const d = new Date(`${date}T00:00:00`);
-  return d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
+  return d.toLocaleDateString(lang === "hi" ? "hi-IN" : "en-IN", { weekday: "short", day: "numeric", month: "short" });
 }
 
 function time12(t: string) {
@@ -63,6 +64,7 @@ export default function AgentJobsPage() {
 
 function AgentJobs() {
   const user = useAuth();
+  const t = useT();
   const [tab, setTab] = useState<JobGroup>("new");
   const [jobs, setJobs] = useState<AgentJob[]>([]);
   const [summary, setSummary] = useState<AgentSummary | null>(null);
@@ -90,44 +92,44 @@ function AgentJobs() {
           if (s.new === 0 && s.active > 0 && tab === "new") setTab("active");
         }
       } catch (e) {
-        setError(apiError(e, "Could not load your jobs."));
+        setError(t(apiError(e, "Could not load your jobs.")));
       } finally {
         setLoading(false);
         setRefreshing(false);
       }
     },
-    [tab, search]
+    [tab, search, t]
   );
 
   useEffect(() => {
-    const t = setTimeout(() => void load(), search ? 300 : 0);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => void load(), search ? 300 : 0);
+    return () => clearTimeout(timer);
   }, [load, search]);
 
   // Har 30 second naye jobs check karo (tab chhupa ho to nahi)
   useEffect(() => {
-    const t = setInterval(() => {
+    const timer = setInterval(() => {
       if (!document.hidden) void load(true);
     }, 30000);
-    return () => clearInterval(t);
+    return () => clearInterval(timer);
   }, [load]);
 
   useEffect(() => {
     if (!toast) return;
-    const t = setTimeout(() => setToast(null), 4000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setToast(null), 4000);
+    return () => clearTimeout(timer);
   }, [toast]);
 
   async function run(job: AgentJob, fn: () => Promise<{ message: string }>, moveTo?: JobGroup) {
     setBusyId(job.id);
     try {
       const r = await fn();
-      setToast({ tone: "ok", text: r.message });
+      setToast({ tone: "ok", text: t(r.message) });
       if (moveTo && moveTo !== tab) setTab(moveTo);
       else await load(true);
       return true;
     } catch (e) {
-      setToast({ tone: "err", text: apiError(e, "Something went wrong.") });
+      setToast({ tone: "err", text: t(apiError(e, "Something went wrong.")) });
       await load(true);
       return false;
     } finally {
@@ -142,7 +144,7 @@ function AgentJobs() {
     if (a.key === "otw") void run(job, () => agentApi.onTheWay(job.id));
     if (a.key === "start") setOtpFor(job);
     if (a.key === "complete") {
-      if (window.confirm("Is the work fully done? The customer will be asked to pay and rate you.")) {
+      if (window.confirm(t("Is the work fully done? The customer will be asked to pay and rate you."))) {
         void run(job, () => agentApi.complete(job.id));
       }
     }
@@ -154,8 +156,8 @@ function AgentJobs() {
     <div className="space-y-6">
       <section className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <p className="text-sm font-medium text-gray-500">Namaste{firstName ? `, ${firstName}` : ""} 👋</p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-gray-950 sm:text-3xl">Your jobs</h1>
+          <p className="text-sm font-medium text-gray-500">{t("Namaste")}{firstName ? `, ${firstName}` : ""} 👋</p>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-gray-950 sm:text-3xl">{t("Your jobs")}</h1>
         </div>
         <button
           type="button"
@@ -163,7 +165,7 @@ function AgentJobs() {
           disabled={refreshing}
           className="inline-flex items-center gap-2 self-start rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60 sm:self-auto"
         >
-          <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} /> Refresh
+          <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} /> {t("Refresh")}
         </button>
       </section>
 
@@ -178,7 +180,7 @@ function AgentJobs() {
         ].map(({ label, value, icon: Icon, tone }) => (
           <div key={label} className="rounded-2xl border border-gray-200 bg-white p-4">
             <p className="flex items-center gap-1.5 text-xs font-medium text-gray-500">
-              <Icon size={14} /> {label}
+              <Icon size={14} /> {t(label)}
             </p>
             <p className={`mt-1 text-2xl font-bold tabular-nums ${tone}`}>{value ?? "–"}</p>
           </div>
@@ -187,34 +189,34 @@ function AgentJobs() {
 
       <section className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div role="tablist" aria-label="Job status" className="flex gap-1 overflow-x-auto rounded-xl bg-gray-100 p-1">
-          {TABS.map((t) => {
-            const n = t.key === "new" ? summary?.new : t.key === "active" ? summary?.active : undefined;
+          {TABS.map((tb) => {
+            const n = tb.key === "new" ? summary?.new : tb.key === "active" ? summary?.active : undefined;
             return (
               <button
-                key={t.key}
+                key={tb.key}
                 role="tab"
-                aria-selected={tab === t.key}
-                onClick={() => setTab(t.key)}
+                aria-selected={tab === tb.key}
+                onClick={() => setTab(tb.key)}
                 className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-semibold transition ${
-                  tab === t.key ? "bg-white text-gray-950 shadow-sm" : "text-gray-500 hover:text-gray-900"
+                  tab === tb.key ? "bg-white text-gray-950 shadow-sm" : "text-gray-500 hover:text-gray-900"
                 }`}
               >
-                {t.label}
+                {t(tb.label)}
                 {!!n && (
-                  <span className={`rounded-full px-1.5 text-xs ${t.key === "new" ? "bg-orange-500 text-white" : "bg-gray-200 text-gray-700"}`}>{n}</span>
+                  <span className={`rounded-full px-1.5 text-xs ${tb.key === "new" ? "bg-orange-500 text-white" : "bg-gray-200 text-gray-700"}`}>{n}</span>
                 )}
               </button>
             );
           })}
         </div>
         <label className="relative block sm:w-72">
-          <span className="sr-only">Search jobs</span>
+          <span className="sr-only">{t("Search jobs")}</span>
           <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Customer, service or area"
+            placeholder={t("Customer, service or area")}
             className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm text-gray-900 outline-none focus:border-gray-400"
           />
         </label>
@@ -231,7 +233,7 @@ function AgentJobs() {
       ) : jobs.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-gray-300 bg-white px-6 py-14 text-center">
           <ClipboardEmpty />
-          <p className="mt-3 text-sm text-gray-500">{TABS.find((t) => t.key === tab)?.empty}</p>
+          <p className="mt-3 text-sm text-gray-500">{t(TABS.find((tb) => tb.key === tab)?.empty ?? "")}</p>
         </div>
       ) : (
         <ul className="space-y-4">
@@ -306,6 +308,8 @@ function JobCard({
   onDecline: () => void;
   onChanged: () => void;
 }) {
+  const t = useT();
+  const lang = useLang();
   const action = nextAction(job.status);
   const isNew = job.status === "agent_assigned";
   const canDecline = job.status === "agent_assigned" || job.status === "agent_accepted";
@@ -316,7 +320,7 @@ function JobCard({
       <div className="p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-xs font-semibold text-gray-400">BOOKING #{job.id}</p>
+            <p className="text-xs font-semibold text-gray-400">{t("BOOKING")} #{job.id}</p>
             <h2 className="mt-0.5 text-lg font-bold text-gray-950">{job.service_name}</h2>
           </div>
           <div className="text-right">
@@ -324,7 +328,7 @@ function JobCard({
               <Clock3 size={15} /> {time12(job.booking_time)}
             </p>
             <p className={`text-sm font-semibold ${dayLabel(job.booking_date) === "Today" ? "text-orange-600" : "text-gray-500"}`}>
-              {dayLabel(job.booking_date)}
+              {dayLabel(job.booking_date, lang)}
             </p>
           </div>
         </div>
@@ -339,20 +343,20 @@ function JobCard({
             <MapPin size={18} className="mt-0.5 shrink-0 text-orange-600" />
             <span className="min-w-0">
               <span className="block break-words font-medium">{job.address}</span>
-              <span className="text-xs font-semibold text-blue-600">Open in Google Maps</span>
+              <span className="text-xs font-semibold text-blue-600">{t("Open in Google Maps")}</span>
             </span>
           </a>
           <div className="flex items-center justify-between gap-3 rounded-xl bg-gray-50 p-3 text-sm">
             <div className="min-w-0">
               <p className="truncate font-medium text-gray-900">{job.customer_name}</p>
-              <p className="text-xs text-gray-500">Customer{job.provider_name ? ` · via ${job.provider_name}` : ""}</p>
+              <p className="text-xs text-gray-500">{t("Customer")}{job.provider_name ? ` · ${t("via")} ${job.provider_name}` : ""}</p>
             </div>
             {job.customer_phone && job.status !== "completed" && (
               <a
                 href={`tel:${job.customer_phone}`}
                 className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-xs font-semibold text-gray-800 ring-1 ring-gray-200 hover:bg-gray-100"
               >
-                <Phone size={14} /> Call
+                <Phone size={14} /> {t("Call")}
               </a>
             )}
           </div>
@@ -376,7 +380,7 @@ function JobCard({
 
       {action && (
         <div className="border-t border-gray-100 bg-gray-50/60 p-4">
-          <p className="mb-2 text-xs text-gray-500">{action.hint}</p>
+          <p className="mb-2 text-xs text-gray-500">{t(action.hint)}</p>
           <div className="flex flex-col gap-2 sm:flex-row">
             <button
               type="button"
@@ -384,7 +388,7 @@ function JobCard({
               disabled={busy}
               className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-gray-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:opacity-60"
             >
-              {busy ? <Loader2 size={18} className="animate-spin" /> : <action.icon size={18} />} {action.label}
+              {busy ? <Loader2 size={18} className="animate-spin" /> : <action.icon size={18} />} {t(action.label)}
             </button>
             {canDecline && (
               <button
@@ -393,7 +397,7 @@ function JobCard({
                 disabled={busy}
                 className="rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-60"
               >
-                Can&apos;t do it
+                {t("Can't do it")}
               </button>
             )}
           </div>
@@ -404,6 +408,7 @@ function JobCard({
 }
 
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+  const t = useT();
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
@@ -414,7 +419,7 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
       <div className="w-full max-w-md rounded-t-3xl bg-white p-6 shadow-2xl sm:rounded-3xl">
         <div className="flex items-start justify-between gap-3">
           <h2 className="text-lg font-bold text-gray-950">{title}</h2>
-          <button type="button" onClick={onClose} aria-label="Close" className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100">
+          <button type="button" onClick={onClose} aria-label={t("Close")} className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100">
             <X size={18} />
           </button>
         </div>
@@ -426,13 +431,14 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
 
 function OtpDialog({ job, onClose, onSubmit }: { job: AgentJob; onClose: () => void; onSubmit: (otp: string) => Promise<boolean> }) {
   // Ek hi input (4 boxes jaisa dikhta hai): fast typing ya paste mein digits aage-peeche nahi hote
+  const t = useT();
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const t = setTimeout(() => inputRef.current?.focus(), 50);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => inputRef.current?.focus(), 50);
+    return () => clearTimeout(timer);
   }, []);
 
   async function submit() {
@@ -447,9 +453,9 @@ function OtpDialog({ job, onClose, onSubmit }: { job: AgentJob; onClose: () => v
   }
 
   return (
-    <Modal title="Enter start code" onClose={onClose}>
+    <Modal title={t("Enter start code")} onClose={onClose}>
       <p className="mt-1 text-sm text-gray-600">
-        Ask {job.customer_name.split(" ")[0]} for the 4-digit code shown in their Urbino app. This confirms you have reached.
+        {t("Ask {name} for the 4-digit code shown in their Urbino app. This confirms you have reached.", { name: job.customer_name.split(" ")[0] })}
       </p>
       <div className="relative mx-auto mt-5 w-fit" onClick={() => inputRef.current?.focus()}>
         <input
@@ -460,7 +466,7 @@ function OtpDialog({ job, onClose, onSubmit }: { job: AgentJob; onClose: () => v
           inputMode="numeric"
           autoComplete="one-time-code"
           maxLength={4}
-          aria-label="4-digit start code"
+          aria-label={t("4-digit start code")}
           className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
         />
         <div aria-hidden className="flex gap-3">
@@ -482,20 +488,21 @@ function OtpDialog({ job, onClose, onSubmit }: { job: AgentJob; onClose: () => v
         disabled={busy || code.length !== 4}
         className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gray-950 px-5 py-3 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50"
       >
-        {busy && <Loader2 size={16} className="animate-spin" />} Start work
+        {busy && <Loader2 size={16} className="animate-spin" />} {t("Start work")}
       </button>
     </Modal>
   );
 }
 
 function DeclineDialog({ job, onClose, onSubmit }: { job: AgentJob; onClose: () => void; onSubmit: (reason: string) => Promise<void> }) {
+  const t = useT();
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   return (
-    <Modal title={`Can't do booking #${job.id}?`} onClose={onClose}>
-      <p className="mt-1 text-sm text-gray-600">Your provider will assign someone else. Tell them why.</p>
+    <Modal title={t("Can't do booking #{id}?", { id: job.id })} onClose={onClose}>
+      <p className="mt-1 text-sm text-gray-600">{t("Your provider will assign someone else. Tell them why.")}</p>
       <div className="mt-4 flex flex-wrap gap-2">
-        {DECLINE_REASONS.map((r) => (
+        {DECLINE_REASONS.map((r) => t(r)).map((r) => (
           <button
             key={r}
             type="button"
@@ -511,8 +518,8 @@ function DeclineDialog({ job, onClose, onSubmit }: { job: AgentJob; onClose: () 
         onChange={(e) => setReason(e.target.value)}
         rows={3}
         maxLength={300}
-        placeholder="Or write your reason"
-        aria-label="Reason"
+        placeholder={t("Or write your reason")}
+        aria-label={t("Reason")}
         className="mt-3 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none focus:border-gray-400"
       />
       <button
@@ -525,7 +532,7 @@ function DeclineDialog({ job, onClose, onSubmit }: { job: AgentJob; onClose: () 
         }}
         className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-rose-600 px-5 py-3 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-50"
       >
-        {busy && <Loader2 size={16} className="animate-spin" />} Decline job
+        {busy && <Loader2 size={16} className="animate-spin" />} {t("Decline job")}
       </button>
     </Modal>
   );

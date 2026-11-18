@@ -1,3 +1,6 @@
+"use client";
+
+import { useT } from "@/lib/i18n";
 import { BadgeCheck, CreditCard, MapPin, Search, ShieldCheck, Star } from "lucide-react";
 
 const popular = ["AC Repair", "Home Cleaning", "Electrician", "Salon at Home", "Plumber"];
@@ -10,6 +13,7 @@ const trust = [
 ];
 
 export default function Hero() {
+  const t = useT();
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-blue-50 via-white to-white">
       <div className="pointer-events-none absolute -top-40 left-1/2 h-96 w-[60rem] -translate-x-1/2 rounded-full bg-blue-100/50 blur-3xl" />
@@ -18,16 +22,15 @@ export default function Hero() {
         <div className="mx-auto max-w-3xl text-center">
           <span className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-white px-4 py-1.5 text-sm font-medium text-blue-700 shadow-sm">
             <span className="h-2 w-2 rounded-full bg-green-500" />
-            Trusted services at your doorstep
+            {t("Trusted services at your doorstep")}
           </span>
 
           <h1 className="mt-6 text-4xl font-bold tracking-tight text-gray-950 sm:text-5xl lg:text-6xl">
-            Home services, <span className="text-blue-600">booked in minutes.</span>
+            {t("Home services,")} <span className="text-blue-600">{t("booked in minutes.")}</span>
           </h1>
 
           <p className="mx-auto mt-5 max-w-xl text-lg leading-8 text-gray-600">
-            Cleaning, repairs, beauty, wellness and more. Compare verified
-            professionals and book at a price you see upfront.
+            {t("Cleaning, repairs, beauty, wellness and more. Compare verified professionals and book at a price you see upfront.")}
           </p>
 
           {/* Search */}
@@ -36,34 +39,34 @@ export default function Hero() {
               <Search className="h-5 w-5 shrink-0 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search for AC repair, cleaning, salon..."
+                placeholder={t("Search for AC repair, cleaning, salon...")}
                 className="w-full bg-transparent text-sm text-gray-900 outline-none placeholder:text-gray-400"
               />
             </label>
 
             <div className="hidden items-center gap-2 border-l border-gray-100 px-4 text-sm text-gray-500 sm:flex">
               <MapPin className="h-4 w-4" />
-              Your location
+              {t("Your location")}
             </div>
 
             <button
               type="submit"
               className="rounded-xl bg-blue-600 px-7 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
             >
-              Search
+              {t("Search")}
             </button>
           </form>
 
           {/* Popular */}
           <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-sm">
-            <span className="text-gray-500">Popular:</span>
+            <span className="text-gray-500">{t("Popular:")}</span>
             {popular.map((item) => (
               <button
                 key={item}
                 type="button"
                 className="rounded-full border border-gray-200 bg-white px-3.5 py-1.5 text-gray-700 transition hover:border-blue-300 hover:text-blue-700"
               >
-                {item}
+                {t(item)}
               </button>
             ))}
           </div>
@@ -74,7 +77,7 @@ export default function Hero() {
           {trust.map(({ icon: Icon, label }) => (
             <div key={label} className="flex items-center justify-center gap-2.5 text-sm font-medium text-gray-700">
               <Icon size={18} className="text-blue-600" />
-              {label}
+              {t(label)}
             </div>
           ))}
         </div>

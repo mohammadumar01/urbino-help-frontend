@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
-import { CalendarClock, ClipboardList, FileCheck2, LogOut, UserRound, Users, Wrench } from "lucide-react";
+import { CalendarClock, ClipboardList, FileCheck2, LogOut, UserRound, Users, Wallet, Wrench } from "lucide-react";
 import RequireRole from "@/components/auth/RequireRole";
 import UrbinoLogo from "@/components/brand/UrbinoLogo";
 import { clearSession, useAuth } from "@/lib/auth";
 
 const TABS = [
   { href: "/provider/dashboard", label: "Bookings", icon: ClipboardList },
+  { href: "/provider/earnings", label: "Earnings", icon: Wallet },
   { href: "/provider/profile", label: "Profile", icon: UserRound },
   { href: "/provider/services", label: "Services", icon: Wrench },
   { href: "/provider/availability", label: "Working hours", icon: CalendarClock },
@@ -93,7 +94,9 @@ export default function ProviderShell(props: { title: string; subtitle?: string;
 }
 
 export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <section className={`rounded-2xl border border-gray-200 bg-white p-6 shadow-sm ${className}`}>{children}</section>;
+  // className mein apni padding (p-0 / p-4 ...) ho to default p-6 mat lagao
+  const pad = /(^|\s)p-\d/.test(className) ? "" : "p-6";
+  return <section className={`rounded-2xl border border-gray-200 bg-white shadow-sm ${pad} ${className}`}>{children}</section>;
 }
 
 export function Notice({ tone, children }: { tone: "error" | "success" | "info"; children: ReactNode }) {

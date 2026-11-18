@@ -64,7 +64,9 @@ export function timeAgo(v?: string) {
 export function money(v?: number | string) {
   if (v == null || v === "") return "—";
   const n = Number(v);
-  return Number.isFinite(n) ? `₹${n.toLocaleString("en-IN")}` : "—";
+  if (!Number.isFinite(n)) return "—";
+  const d = Number.isInteger(n) ? 0 : 2;
+  return `₹${n.toLocaleString("en-IN", { minimumFractionDigits: d, maximumFractionDigits: d })}`;
 }
 
 export function downloadCsv(filename: string, header: string[], rows: unknown[][]) {

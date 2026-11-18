@@ -13,6 +13,7 @@ import api, { apiError } from "@/lib/api";
 import { getSlots } from "@/lib/providerApi";
 import type { Provider } from "@/lib/providersApi";
 import type { Service } from "@/lib/servicesApi";
+import { useLang, useT } from "@/lib/i18n";
 
 type Booking = {
   id: number;
@@ -28,7 +29,7 @@ const inr = (v: string | number | null | undefined) =>
   v == null || v === "" ? "—" : `₹${Number(v).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
 
 /** Aaj se aage ke 7 din (IST) */
-function nextDays(n = 7) {
+function nextDays(n = 7, hi = false) {
   const out: { iso: string; top: string; day: string }[] = [];
   const base = Date.now() + 5.5 * 3600 * 1000;
   for (let i = 0; i < n; i++) {
@@ -36,8 +37,8 @@ function nextDays(n = 7) {
     const iso = d.toISOString().slice(0, 10);
     out.push({
       iso,
-      top: i === 0 ? "Today" : i === 1 ? "Tomorrow" : d.toLocaleDateString("en-IN", { weekday: "short", timeZone: "UTC" }),
-      day: d.toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "UTC" }),
+      top: i === 0 ? (hi ? "आज" : "Today") : i === 1 ? (hi ? "कल" : "Tomorrow") : d.toLocaleDateString(hi ? "hi-IN" : "en-IN", { weekday: "short", timeZone: "UTC" }),
+      day: d.toLocaleDateString(hi ? "hi-IN" : "en-IN", { day: "numeric", month: "short", timeZone: "UTC" }),
     });
   }
   return out;
@@ -71,6 +72,8 @@ export default function BookingPage() {
 
 function BookingContent() {
   const sp = useSearchParams();
+  const t = useT();
+  const lang = useLang();
   const serviceId = Number(sp.get("serviceId"));
   const urlProviderId = sp.get("providerId");
 
@@ -87,7 +90,7 @@ function BookingContent() {
   const [error, setError] = useState("");
   const [done, setDone] = useState<Booking | null>(null);
 
-  const days = useMemo(() => nextDays(7), []);
+  const days = useMemo(() => nextDays(7, lang === "hi"), [lang]);
 
   useEffect(() => {
     try {
@@ -100,7 +103,7 @@ function BookingContent() {
 
   useEffect(() => {
     if (!Number.isInteger(serviceId) || serviceId <= 0) {
-      setError("Please choose a service first.");
+      setError(t("Please choose a service first."));
       setLoading(false);
       return;
     }
@@ -126,6 +129,7 @@ function BookingContent() {
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [serviceId, urlProviderId]);
 
   // Provider + din chunne par free slots
@@ -139,7 +143,7 @@ function BookingContent() {
         if (cancelled) return;
         const list = r.has_schedule ? r.slots : defaultSlots(date);
         setSlots({ loading: false, list, fromSchedule: r.has_schedule });
-        setTime((t) => (list.includes(t) ? t : ""));
+        setTime((cur) => (list.includes(cur) ? cur : ""));
       })
       .catch(() => !cancelled && setSlots({ loading: false, list: defaultSlots(date), fromSchedule: false }));
     return () => {
@@ -187,7 +191,7 @@ function BookingContent() {
   if (loading) {
     return (
       <main className="flex min-h-[60vh] items-center justify-center bg-gray-50 text-gray-500">
-        <Loader2 className="mr-2 animate-spin" size={18} /> Loading…
+        <Loader2 className="mr-2 animate-spin" size={18} /> {t("Loading…")}
       </main>
     );
   }
@@ -195,10 +199,10 @@ function BookingContent() {
   if (!service) {
     return (
       <main className="min-h-[60vh] bg-gray-50 px-6 py-24 text-center">
-        <h1 className="text-2xl font-bold text-gray-950">Something went wrong</h1>
+        <h1 className="text-2xl font-bold text-gray-950">{t("Something went wrong")}</h1>
         <p className="mt-2 text-gray-500">{error}</p>
         <Link href="/services" className="mt-6 inline-flex rounded-xl bg-gray-950 px-5 py-3 text-sm font-semibold text-white">
-          Browse services
+          {t("Browse services")}
         </Link>
       </main>
     );
@@ -211,27 +215,31 @@ function BookingContent() {
           <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
             <CheckCircle2 size={28} />
           </span>
-          <h1 className="mt-4 text-2xl font-bold text-gray-950">Booking requested!</h1>
+          <h1 className="mt-4 text-2xl font-bold text-gray-950">{t("Booking requested!")}</h1>
           <p className="mt-2 text-sm text-gray-600">
-            {done.service_name} with {provider?.provider_name} on{" "}
-            {days.find((d) => d.iso === date)?.top ?? date}, {time12(time)}. You&apos;ll get an update as soon as they confirm.
+            {t("{service} with {pro} on {day}, {time}. You'll get an update as soon as they confirm.", {
+              service: done.service_name,
+              pro: provider?.provider_name,
+              day: days.find((d) => d.iso === date)?.top ?? date,
+              time: time12(time),
+            })}
           </p>
-          <p className="mt-1 text-xs text-gray-400">Booking #{done.id}</p>
+          <p className="mt-1 text-xs text-gray-400">{t("Booking")} #{done.id}</p>
 
           {done.price != null && Number(done.price) > 0 && (
             <div className="mt-6 rounded-2xl border border-gray-200 p-5 text-left">
-              <p className="text-sm font-semibold text-gray-900">Pay now or after the service</p>
-              <p className="mb-4 text-xs text-gray-500">Total {inr(done.price)} · price locked</p>
+              <p className="text-sm font-semibold text-gray-900">{t("Pay now or after the service")}</p>
+              <p className="mb-4 text-xs text-gray-500">{t("Total")} {inr(done.price)} · {t("price locked")}</p>
               <PaymentActions bookingId={done.id} bookingStatus={done.status} amount={done.price} />
             </div>
           )}
 
           <div className="mt-6 flex flex-col gap-2 sm:flex-row">
             <Link href="/bookings" className="flex-1 rounded-xl bg-gray-950 px-5 py-3 text-sm font-semibold text-white">
-              Track booking
+              {t("Track booking")}
             </Link>
             <Link href="/services" className="flex-1 rounded-xl border border-gray-200 px-5 py-3 text-sm font-semibold text-gray-700">
-              Book something else
+              {t("Book something else")}
             </Link>
           </div>
         </div>
@@ -245,19 +253,19 @@ function BookingContent() {
         <Link href={`/service/${service.id}`} className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-900">
           <ArrowLeft size={15} /> {service.name}
         </Link>
-        <h1 className="mt-3 text-3xl font-bold tracking-tight text-gray-950">Book {service.name}</h1>
-        <p className="mt-1 text-gray-500">Four quick steps. You can reschedule later for free.</p>
+        <h1 className="mt-3 text-3xl font-bold tracking-tight text-gray-950">{t("Book {name}", { name: service.name })}</h1>
+        <p className="mt-1 text-gray-500">{t("Four quick steps. You can reschedule later for free.")}</p>
 
         <form onSubmit={submit} className="mt-8 grid gap-6 lg:grid-cols-[1fr_340px] lg:items-start">
           <div className="space-y-5">
             {/* 1. Professional */}
-            <Step n={1} title="Choose your professional" done={!!provider}>
+            <Step n={1} title={t("Choose your professional")} done={!!provider}>
               {providers.length === 0 ? (
                 <div className="rounded-xl bg-amber-50 p-4 text-sm text-amber-900">
-                  No professionals offer this service yet. Tap <b>Help</b> at the bottom right and our team will arrange one for you.
+                  {t("No professionals offer this service yet. Tap Help at the bottom right and our team will arrange one for you.")}
                 </div>
               ) : (
-                <div role="radiogroup" aria-label="Professional" className="grid gap-3 sm:grid-cols-2">
+                <div role="radiogroup" aria-label={t("Professional")} className="grid gap-3 sm:grid-cols-2">
                   {providers.map((p) => {
                     const selected = String(p.provider_id) === providerId;
                     const count = Number(p.total_reviews);
@@ -275,7 +283,7 @@ function BookingContent() {
                         <div className="flex items-start justify-between gap-2">
                           <p className="flex items-center gap-1.5 font-semibold text-gray-950">
                             {p.provider_name}
-                            {p.is_verified && <BadgeCheck size={16} className="text-blue-600" aria-label="Verified" />}
+                            {p.is_verified && <BadgeCheck size={16} className="text-blue-600" aria-label={t("Verified")} />}
                           </p>
                           <p className="font-bold text-gray-950">{inr(p.price)}</p>
                         </div>
@@ -285,9 +293,9 @@ function BookingContent() {
                               <Star size={12} className="fill-amber-400 text-amber-400" /> {Number(p.average_rating).toFixed(1)} ({count})
                             </span>
                           ) : (
-                            <span>New</span>
+                            <span>{t("New")}</span>
                           )}
-                          {p.experience_years != null && <span>· {p.experience_years} yrs</span>}
+                          {p.experience_years != null && <span>· {p.experience_years} {t("yrs")}</span>}
                           {p.service_area && <span className="truncate">· {p.service_area}</span>}
                         </p>
                       </button>
@@ -298,8 +306,8 @@ function BookingContent() {
             </Step>
 
             {/* 2. Date */}
-            <Step n={2} title="Pick a day" done={!!date} disabled={!provider}>
-              <div className="flex gap-2 overflow-x-auto pb-1" role="radiogroup" aria-label="Day">
+            <Step n={2} title={t("Pick a day")} done={!!date} disabled={!provider}>
+              <div className="flex gap-2 overflow-x-auto pb-1" role="radiogroup" aria-label={t("Day")}>
                 {days.map((d) => (
                   <button
                     key={d.iso}
@@ -319,38 +327,38 @@ function BookingContent() {
             </Step>
 
             {/* 3. Time */}
-            <Step n={3} title="Pick a time" done={!!time} disabled={!date}>
+            <Step n={3} title={t("Pick a time")} done={!!time} disabled={!date}>
               {slots.loading ? (
                 <p className="flex items-center gap-2 text-sm text-gray-500">
-                  <Loader2 size={15} className="animate-spin" /> Checking free slots…
+                  <Loader2 size={15} className="animate-spin" /> {t("Checking free slots…")}
                 </p>
               ) : slots.list.length === 0 ? (
-                <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">No free slots on this day. Please pick another day.</p>
+                <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">{t("No free slots on this day. Please pick another day.")}</p>
               ) : (
                 <>
-                  <div role="radiogroup" aria-label="Time" className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                    {slots.list.map((t) => (
+                  <div role="radiogroup" aria-label={t("Time")} className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                    {slots.list.map((slot) => (
                       <button
-                        key={t}
+                        key={slot}
                         type="button"
                         role="radio"
-                        aria-checked={time === t}
-                        onClick={() => setTime(t)}
+                        aria-checked={time === slot}
+                        onClick={() => setTime(slot)}
                         className={`rounded-xl border-2 px-3 py-2.5 text-sm font-semibold transition ${
-                          time === t ? "border-gray-950 bg-gray-950 text-white" : "border-gray-200 bg-white text-gray-800 hover:border-gray-400"
+                          time === slot ? "border-gray-950 bg-gray-950 text-white" : "border-gray-200 bg-white text-gray-800 hover:border-gray-400"
                         }`}
                       >
-                        {time12(t)}
+                        {time12(slot)}
                       </button>
                     ))}
                   </div>
-                  {slots.fromSchedule && <p className="mt-2 text-xs text-gray-500">Showing {provider?.provider_name}&apos;s free 1-hour slots.</p>}
+                  {slots.fromSchedule && <p className="mt-2 text-xs text-gray-500">{t("Showing {name}'s free 1-hour slots.", { name: provider?.provider_name })}</p>}
                 </>
               )}
             </Step>
 
             {/* 4. Address */}
-            <Step n={4} title="Where should they come?" done={address.trim().length >= 10} disabled={!time}>
+            <Step n={4} title={t("Where should they come?")} done={address.trim().length >= 10} disabled={!time}>
               {lastAddress && lastAddress !== address && (
                 <button
                   type="button"
@@ -359,13 +367,13 @@ function BookingContent() {
                 >
                   <MapPin size={16} className="mt-0.5 shrink-0 text-orange-600" />
                   <span>
-                    <span className="block font-semibold text-gray-900">Use previous address</span>
+                    <span className="block font-semibold text-gray-900">{t("Use previous address")}</span>
                     <span className="text-gray-500">{lastAddress}</span>
                   </span>
                 </button>
               )}
               <label htmlFor="address" className="sr-only">
-                Full address
+                {t("Full address")}
               </label>
               <textarea
                 id="address"
@@ -373,7 +381,7 @@ function BookingContent() {
                 onChange={(e) => setAddress(e.target.value)}
                 rows={3}
                 maxLength={500}
-                placeholder="House / flat no., street, landmark, city"
+                placeholder={t("House / flat no., street, landmark, city")}
                 className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none focus:border-gray-500"
               />
             </Step>
@@ -381,22 +389,22 @@ function BookingContent() {
 
           {/* Summary */}
           <aside className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm lg:sticky lg:top-24">
-            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Your booking</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">{t("Your booking")}</p>
             <p className="mt-2 text-lg font-bold text-gray-950">{service.name}</p>
             <dl className="mt-4 space-y-3 text-sm">
-              <Row icon={BadgeCheck} label="Professional" value={provider?.provider_name ?? "Choose one"} muted={!provider} />
-              <Row icon={CalendarDays} label="Day" value={date ? `${days.find((d) => d.iso === date)?.top}, ${days.find((d) => d.iso === date)?.day}` : "Pick a day"} muted={!date} />
-              <Row icon={Clock3} label="Time" value={time ? time12(time) : "Pick a time"} muted={!time} />
-              <Row icon={MapPin} label="Address" value={address.trim() || "Add address"} muted={!address.trim()} />
+              <Row icon={BadgeCheck} label={t("Professional")} value={provider?.provider_name ?? t("Choose one")} muted={!provider} />
+              <Row icon={CalendarDays} label={t("Day")} value={date ? `${days.find((d) => d.iso === date)?.top}, ${days.find((d) => d.iso === date)?.day}` : t("Pick a day")} muted={!date} />
+              <Row icon={Clock3} label={t("Time")} value={time ? time12(time) : t("Pick a time")} muted={!time} />
+              <Row icon={MapPin} label={t("Address")} value={address.trim() || t("Add address")} muted={!address.trim()} />
             </dl>
             <div className="mt-5 flex items-baseline justify-between border-t border-gray-100 pt-4">
-              <span className="text-sm text-gray-500">Total</span>
+              <span className="text-sm text-gray-500">{t("Total")}</span>
               <span className="text-2xl font-bold text-gray-950">{inr(price)}</span>
             </div>
             <ul className="mt-3 space-y-1.5 text-xs text-gray-500">
-              <li className="flex items-center gap-1.5"><Tag size={13} /> Price locked, no hidden charges</li>
-              <li className="flex items-center gap-1.5"><KeyRound size={13} /> Start code for your safety</li>
-              <li className="flex items-center gap-1.5"><RotateCcw size={13} /> 7-day free rework guarantee</li>
+              <li className="flex items-center gap-1.5"><Tag size={13} /> {t("Price locked, no hidden charges")}</li>
+              <li className="flex items-center gap-1.5"><KeyRound size={13} /> {t("Start code for your safety")}</li>
+              <li className="flex items-center gap-1.5"><RotateCcw size={13} /> {t("7-day free rework guarantee")}</li>
             </ul>
             {error && <p role="alert" className="mt-4 rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>}
             <button
@@ -404,14 +412,14 @@ function BookingContent() {
               disabled={!ready || submitting}
               className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gray-950 px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              {submitting && <Loader2 size={16} className="animate-spin" />} Confirm booking
+              {submitting && <Loader2 size={16} className="animate-spin" />} {t("Confirm booking")}
             </button>
             {!ready && (
               <p className="mt-2 text-center text-xs text-gray-400">
-                {!provider ? "Choose a professional" : !date ? "Pick a day" : !time ? "Pick a time" : "Add your full address (10+ characters)"}
+                {t(!provider ? "Choose a professional" : !date ? "Pick a day" : !time ? "Pick a time" : "Add your full address (10+ characters)")}
               </p>
             )}
-            <p className="mt-3 text-center text-xs text-gray-400">Pay online or in cash after the service.</p>
+            <p className="mt-3 text-center text-xs text-gray-400">{t("Pay online or in cash after the service.")}</p>
           </aside>
         </form>
       </div>

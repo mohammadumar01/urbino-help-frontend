@@ -52,7 +52,11 @@ function LoginForm() {
       const next = searchParams.get("next");
       const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : null;
       const role = (user.role === "user" ? "customer" : user.role) as Role;
-      router.push(safeNext && role === "customer" ? safeNext : ROLE_HOME[role] || "/services");
+      // next sirf tab jab woh page isi role ka ho (provider -> /provider/..., agent -> /agent/...)
+      const area = safeNext?.split(/[/?#]/)[1] ?? "";
+      const allowed =
+        role === "customer" ? !["admin", "provider", "agent"].includes(area) : (role === "provider" || role === "agent") && area === role;
+      router.push(safeNext && allowed ? safeNext : ROLE_HOME[role] || "/services");
 
     } catch (error) {
       setError(apiError(error, "Invalid email or password."));
